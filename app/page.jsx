@@ -1,6 +1,7 @@
 import Hero from './_components/Hero';
 import { InteractiveCarousel } from './_components/Carousel';
 import { WorldMapDemo } from './_components/Worldmap';
+import Footer from './_components/Footer';
 
 
 export default function Home() {
@@ -9,7 +10,7 @@ export default function Home() {
       <Hero />
       <InteractiveCarousel />
       <WorldMapDemo />
-      
+      <Footer /> 
 
     </div>
   );

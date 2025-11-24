@@ -1,5 +1,13 @@
 import { Globe2, Plane, Landmark, Sparkles, Map, Leaf } from 'lucide-react';
 
+// Footer component data
+export const footerLinks = [
+  { name: 'Terms of Service', href: '#' },
+  { name: 'Privacy Policy', href: '#' },
+  { name: 'Contact', href: '#' },
+  { name: 'Company', href: '#' }
+];
+
 // Navbar menu options
 export const menuOptions = [
   {
