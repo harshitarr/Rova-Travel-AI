@@ -1,8 +1,7 @@
 import {Outfit} from "next/font/google";
 import "./globals.css";
 import Provider from "./provider";
-
-
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const metadata = {
   title: "Rova | Travel AI",
@@ -13,6 +12,7 @@ const outfit=Outfit({subsets:['latin']})
 
 export default function RootLayout({ children }) {
   return (
+    <ClerkProvider>
     <html lang="en">
       <body className={outfit.className}>
       <Provider>
@@ -21,5 +21,6 @@ export default function RootLayout({ children }) {
         
       </body>
     </html>
+    </ClerkProvider>
   );
 }

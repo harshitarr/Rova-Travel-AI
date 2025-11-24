@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
+import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
+import { Package } from 'lucide-react';
+
 
 const Navbar = () => {
     
     const [isMounted, setIsMounted] = useState(false);
-    
+    const { user } = useUser();
     const currentPath = usePathname();
-    
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     
@@ -59,14 +61,29 @@ const Navbar = () => {
                     })}
                 </div>
 
-                {/* Desktop Get Started Button */}
-                <Button className='hidden md:block bg-[#F472B6] hover:bg-rose-500 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
-                    Get Started
-                </Button>
+                {/* Desktop Get Started Button / User Button */}
+                {!user ? (
+                    <SignInButton>
+                        <Button className='hidden md:block bg-[#F472B6] hover:bg-pink-500 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
+                            Get Started
+                        </Button>
+                    </SignInButton>
+                ) : (
+                    <div className="hidden md:flex items-center gap-3">
+                        <Button 
+                            className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2'
+                            onClick={() => console.log('My Trips clicked')}
+                        >
+                            <Package size={16} />
+                            My Trips
+                        </Button>
+                        <UserButton />
+                    </div>
+                )}
 
                 {/* Mobile Menu Button (Hamburger) */}
                 <button
-                    className='md:hidden p-2 text-gray-500 hover:text-rose-500 transition-colors duration-300'
+                    className='md:hidden p-2 text-gray-500 hover:text-pink-500 transition-colors duration-300'
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                     aria-label="Toggle menu"
                 >
@@ -95,9 +112,24 @@ const Navbar = () => {
                             </Link>
                         );
                     })}
-                    <Button className='w-full mt-4 mb-2 bg-[#F472B6] hover:bg-rose-500'>
-                        Get Started
-                    </Button>
+                    {!user ? (
+                        <SignInButton>
+                            <Button className='w-full mt-4 mb-2 bg-[#F472B6] hover:bg-rose-500'>
+                                Get Started
+                            </Button>
+                        </SignInButton>
+                    ) : (
+                        <div className="w-full mt-4 mb-2 flex flex-col items-center gap-3">
+                            <Button 
+                                className='w-full bg-[#F472B6] hover:bg-rose-500 text-white flex items-center justify-center gap-2'
+                                onClick={() => console.log('My Trips clicked')}
+                            >
+                                <Package size={16} />
+                                My Trips
+                            </Button>
+                            <UserButton />
+                        </div>
+                    )}
                 </div>
             </div>
         </nav>

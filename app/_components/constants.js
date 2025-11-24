@@ -28,19 +28,35 @@ export const menuOptions = [
 export const suggestions = [
   {
     title: 'Plan a Europe backpacking trip',
-    icon: Globe2
+    icon: Globe2,
+    bgColor: 'bg-blue-50',
+    hoverColor: 'hover:bg-blue-500',
+    borderColor: 'border-blue-200',
+    iconColor: 'text-blue-400'
   },
   {
     title: 'Find cheap flights to Bali',
-    icon: Plane
+    icon: Plane,
+    bgColor: 'bg-green-50',
+    hoverColor: 'hover:bg-green-500',
+    borderColor: 'border-green-200',
+    iconColor: 'text-green-400'
   },
   {
     title: 'Best historical sites in Rome',
-    icon: Landmark
+    icon: Landmark,
+    bgColor: 'bg-purple-50',
+    hoverColor: 'hover:bg-purple-500',
+    borderColor: 'border-purple-200',
+    iconColor: 'text-purple-400'
   },
   {
     title: 'Weekend getaway in the mountains',
-    icon: Sparkles
+    icon: Sparkles,
+    bgColor: 'bg-amber-50',
+    hoverColor: 'hover:bg-amber-500',
+    borderColor: 'border-amber-200',
+    iconColor: 'text-amber-400'
   },
 ];
 

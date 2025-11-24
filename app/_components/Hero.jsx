@@ -4,8 +4,22 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Send, Globe2, Plane, Landmark, Sparkles, Map, Leaf, TrendingUp, Compass, ChevronRight, Zap } from 'lucide-react'
 import { suggestions, features } from './constants';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 const Hero = () => {
+
+    const {user} = useUser();
+    const router=useRouter();
+    const onSend = () => {
+        if(!user){
+
+            router.push('/sign-in');    
+            return;
+        }
+
+        //Navigate to trip planning page or trigger trip planning action
+    }
     return (
         <div className='mt-24 w-full flex justify-center'>
             {/* Content Container - Centered and Max Width */}
@@ -28,7 +42,8 @@ const Hero = () => {
                         />
                         <Button
                             size={'icon'}
-                            className="bg-[#F472B6] hover:bg-rose-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105"
+                            className="bg-[#F472B6] hover:bg-pink-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105"
+                            onClick={() =>onSend()} 
                         >
                             <Send className='h-5 w-5' />
                         </Button>
@@ -42,9 +57,9 @@ const Hero = () => {
                         return (
                             <div
                                 key={index}
-                                className="flex items-center gap-2 border border-rose-200 rounded-full px-4 py-2 cursor-pointer text-gray-700 bg-rose-50 hover:bg-[#F472B6] hover:text-white transition-all duration-300 text-sm md:text-base w-fit shadow-md"
+                                className={`flex items-center gap-2 border ${suggestion.borderColor} rounded-full px-4 py-2 cursor-pointer text-gray-700 ${suggestion.bgColor} ${suggestion.hoverColor} hover:text-white transition-all duration-300 text-sm md:text-base w-fit shadow-md`}
                             >
-                                <Icon className='text-blue-400 h-5 w-5' />
+                                <Icon className={`${suggestion.iconColor} h-5 w-5`} />
                                 <h2>{suggestion.title}</h2>
                             </div>
                         );

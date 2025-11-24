@@ -6,7 +6,7 @@ export function WorldMapDemo() {
   return (
     <div className="py-40 dark:bg-black bg-white w-full">
       <div className="max-w-7xl mx-auto text-center">
-        <p className="font-bold text-xl md:text-5xl dark:text-white text-black">
+        <p className="font-bold text-4xl md:text-5xl dark:text-white text-black">
           Global{" "}
           <span className="text-[#F472B6]">
             {"Adventures".split("").map((word, idx) => (
@@ -21,9 +21,9 @@ export function WorldMapDemo() {
             ))}
           </span>
         </p>
-        <p className="text-sm md:text-lg text-neutral-500 max-w-2xl mx-auto py-4">
+        <p className="text-lg md:text-lg text-neutral-500 max-w-2xl mx-auto py-4 space-y-2">
           Discover amazing destinations around the world. From bustling cities to serene landscapes, 
-          your next adventure is just a click away. Perfect for travelers and explorers.
+          your next adventure is just a click away. 
         </p>
       </div>
       <WorldMap
