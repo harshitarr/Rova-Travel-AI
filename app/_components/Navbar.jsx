@@ -3,23 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Plane, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
 import { usePathname } from 'next/navigation';
-
-const menuOptions = [
-    {
-        name: 'Home',
-        path: '/'
-    },
-    {
-        name: 'Pricing',
-        path: '/pricing'
-    },
-    {
-        name: 'Contact us',
-        path: '/contact-us'
-    }
-];
+import { menuOptions } from './constants';
 
 const Navbar = () => {
     
@@ -49,7 +34,7 @@ const Navbar = () => {
 
                 {/* Logo and Branding */}
                 <Link href="/" className="flex items-center gap-2">
-                    <Plane size={32} className='text-rose-400 w-10 h-10 transform transition-transform duration-500 hover:rotate-12'/>
+                    <Plane size={32} className='text-[#F472B6] w-10 h-10 transform transition-transform duration-500 hover:rotate-12'/>
                     <h2 className="text-2xl font-extrabold tracking-tight text-gray-800">Rova AI</h2>
                 </Link>
 
@@ -60,13 +45,13 @@ const Navbar = () => {
                         const isActive = currentPath === menu.path;
                         return (
                             <Link href={menu.path} key={index} className='group'>
-                                <div className={`relative transition-all duration-300 ${isActive ? 'text-rose-400 font-semibold' : 'text-gray-500 hover:text-rose-500'}`}>
+                                <div className={`relative transition-all duration-300 ${isActive ? 'text-[#F472B6] font-semibold' : 'text-gray-500 hover:text-rose-500'}`}>
                                     <h2 className='text-lg cursor-pointer transform transition-transform duration-300 hover:scale-105'>
                                         {menu.name}
                                     </h2>
                                     {/* Active link indicator line */}
                                     <div
-                                        className={`absolute bottom-0 left-0 h-0.5 bg-rose-400 transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-1/2'}`}
+                                        className={`absolute bottom-0 left-0 h-0.5 bg-[#F472B6] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-1/2'}`}
                                     ></div>
                                 </div>
                             </Link>
@@ -75,7 +60,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Get Started Button */}
-                <Button className='hidden md:block bg-rose-400 hover:bg-rose-500 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
+                <Button className='hidden md:block bg-[#F472B6] hover:bg-rose-500 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
                     Get Started
                 </Button>
 
@@ -101,7 +86,7 @@ const Navbar = () => {
                             <Link
                                 href={menu.path}
                                 key={index}
-                                className={`w-full py-3 border-b text-center border-gray-100 transition-all duration-300 ${isActive ? 'text-rose-400 font-bold bg-rose-50' : 'text-gray-700 hover:bg-gray-50'}`}
+                                className={`w-full py-3 border-b text-center border-gray-100 transition-all duration-300 ${isActive ? 'text-[#F472B6] font-bold bg-rose-50' : 'text-gray-700 hover:bg-gray-50'}`}
                                 onClick={() => setIsMenuOpen(false)} // Close menu on click
                             >
                                 <h2 className='text-lg'>
@@ -110,7 +95,7 @@ const Navbar = () => {
                             </Link>
                         );
                     })}
-                    <Button className='w-full mt-4 mb-2 bg-rose-400 hover:bg-rose-500'>
+                    <Button className='w-full mt-4 mb-2 bg-[#F472B6] hover:bg-rose-500'>
                         Get Started
                     </Button>
                 </div>
