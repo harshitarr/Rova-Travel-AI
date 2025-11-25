@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
-import { Package } from 'lucide-react';
+import { Package ,Sparkles } from 'lucide-react';
 
 
 const Navbar = () => {
@@ -70,8 +70,17 @@ const Navbar = () => {
                     </SignInButton>
                 ) : (
                     <div className="hidden md:flex items-center gap-3">
+                        <Link href="/create-new-trip">
+                         <Button 
+                            className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
+                            onClick={() => console.log('My Trips clicked')}
+                        >
+                            <Sparkles size={16}/>
+                           Generate Plan
+                        </Button>
+                        </Link>
                         <Button 
-                            className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2'
+                            className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
                             onClick={() => console.log('My Trips clicked')}
                         >
                             <Package size={16} />
@@ -114,14 +123,23 @@ const Navbar = () => {
                     })}
                     {!user ? (
                         <SignInButton>
-                            <Button className='w-full mt-4 mb-2 bg-[#F472B6] hover:bg-rose-500'>
+                            <Button className='w-full mt-4 mb-2 bg-[#F472B6] hover:bg-pink-500'>
                                 Get Started
                             </Button>
                         </SignInButton>
                     ) : (
                         <div className="w-full mt-4 mb-2 flex flex-col items-center gap-3">
+                            <Link href="/create-new-trip" className="w-full">
                             <Button 
-                                className='w-full bg-[#F472B6] hover:bg-rose-500 text-white flex items-center justify-center gap-2'
+                                className='w-full bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center justify-center gap-2 cursor-pointer'
+                                onClick={() => console.log('Generate Plan clicked')}
+                            >
+                                <Sparkles size={16}/>
+                                Generate Plan
+                            </Button>
+                            </Link>
+                            <Button 
+                                className='w-full bg-[#F472B6] hover:bg-pink-500 text-white flex items-center justify-center gap-2 cursor-pointer'
                                 onClick={() => console.log('My Trips clicked')}
                             >
                                 <Package size={16} />

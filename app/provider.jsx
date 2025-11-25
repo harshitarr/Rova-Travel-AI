@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
 import { useUser } from "@clerk/nextjs";
+import { UserDetailContext } from "../context/UserDetailContext";
 
 
 
 const Provider = ({ children }) => {
   const { user } = useUser();
+  const [userDetail, setUserDetail] = useState(null);
 
 
   useEffect(() => {
@@ -42,6 +44,7 @@ const Provider = ({ children }) => {
       
       if (response.ok) {
         console.log('User saved to MongoDB:', result);
+        setUserDetail(result.user);
       } else {
         console.error('Failed to save user:', result.error);
       }
@@ -51,12 +54,18 @@ const Provider = ({ children }) => {
   }
 
   return (
+    <UserDetailContext.Provider value={{userDetail,setUserDetail}}>
     <div>
       <Navbar />
       {children}
       <Footer />
     </div>
+    </UserDetailContext.Provider>
   );
 };
 
 export default Provider;
+
+export const useUserDetail = () => {
+  return useContext(UserDetailContext);
+}
