@@ -27,7 +27,7 @@ export const menuOptions = [
 // Hero component suggestions data
 export const suggestions = [
   {
-    title: 'Plan a Europe backpacking trip',
+    title: 'Create New Trip',
     icon: Globe2,
     bgColor: 'bg-blue-50',
     hoverColor: 'hover:bg-blue-500',
@@ -35,7 +35,7 @@ export const suggestions = [
     iconColor: 'text-blue-400'
   },
   {
-    title: 'Find cheap flights to Bali',
+    title: 'Inspire Me Where to Go',
     icon: Plane,
     bgColor: 'bg-green-50',
     hoverColor: 'hover:bg-green-500',
@@ -43,7 +43,7 @@ export const suggestions = [
     iconColor: 'text-green-400'
   },
   {
-    title: 'Best historical sites in Rome',
+    title: 'Discover Historical Gems',
     icon: Landmark,
     bgColor: 'bg-purple-50',
     hoverColor: 'hover:bg-purple-500',
@@ -51,7 +51,7 @@ export const suggestions = [
     iconColor: 'text-purple-400'
   },
   {
-    title: 'Weekend getaway in the mountains',
+    title: 'Adventure Destinations',
     icon: Sparkles,
     bgColor: 'bg-amber-50',
     hoverColor: 'hover:bg-amber-500',

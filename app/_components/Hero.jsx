@@ -19,6 +19,7 @@ const Hero = () => {
         }
 
         //Navigate to trip planning page or trigger trip planning action
+        router.push('/create-new-trip');
     }
     return (
         <div className='mt-24 w-full flex justify-center'>
@@ -42,7 +43,7 @@ const Hero = () => {
                         />
                         <Button
                             size={'icon'}
-                            className="bg-[#F472B6] hover:bg-pink-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105"
+                            className="bg-[#F472B6] hover:bg-pink-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105 cursor-pointer"
                             onClick={() =>onSend()} 
                         >
                             <Send className='h-5 w-5' />
