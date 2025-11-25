@@ -5,11 +5,26 @@ import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import axios from 'axios';
 import EmptyBoxState from './EmptyBoxState';
+import GroupSizeUi from './GroupSizeUi';
+import BudgetUi from './BudgetUi';
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const RenderGenerativeUi = (ui) => {
+    if(ui === 'budget'){
+      //Budget UI Component can be rendered here
+      return <BudgetUi onSelectedOption={(v)=>{setUserInput(v);onSend();}} />
+
+    }
+    else if(ui === 'groupSize'){
+      //groupSize UI Component can be rendered here
+      return <GroupSizeUi onSelectedOption={(v)=>{setUserInput(v);onSend();}} />
+    }
+    return null;
+  };
 
   const onSend = async () => {
     if (!userInput?.trim() || isLoading) return;
@@ -31,7 +46,8 @@ const ChatBox = () => {
       if (result.data.success) {
         setMessages((prev) => [...prev, {
           role: 'assistant',
-          content: result.data.resp || result.data.message
+          content: result.data.resp || result.data.message,
+          ui:result?.data?.ui
         }]);
       } else {
         throw new Error(result.data.error || 'Failed to get response');
@@ -64,6 +80,7 @@ const ChatBox = () => {
                 : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'
             }`}>
               <p className="text-sm leading-relaxed">{message.content}</p>
+              {RenderGenerativeUi(message.ui ?? '')}
             </div>
           </div>
         ))}
@@ -122,3 +139,4 @@ const ChatBox = () => {
 }
 
 export default ChatBox
+

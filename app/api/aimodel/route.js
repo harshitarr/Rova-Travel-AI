@@ -59,10 +59,11 @@ Ask ONE question at a time in this order:
 5. Trip duration (how many days?)
 6. Travel interests (adventure, culture, food, relaxation, etc.)
 
-Keep responses conversational and engaging. If user provides multiple details at once, acknowledge them and ask for the next missing piece.
+Keep responses conversational and natural. Avoid using escape characters like \\n in responses. Write responses as natural flowing sentences.
+If user provides multiple details at once, acknowledge them briefly and ask for the next missing piece.
 
 IMPORTANT: You must respond with ONLY a valid JSON object in this exact format:
-{"resp": "Your friendly conversational response", "ui": "current_step"}
+{"resp": "Your friendly conversational response without line breaks or escape characters", "ui": "current_step"}
 
 Do not use markdown code blocks, do not add any explanation before or after the JSON.
 
@@ -70,7 +71,7 @@ UI step options: "source", "destination", "groupSize", "budget", "duration", "in
 
 When you have all information, set ui to "final" and create a complete trip summary.
 
-Example response: {"resp": "Hello! I'm excited to help plan your trip. Where will you be traveling from?", "ui": "source"}`
+Example response: {"resp": "Perfect! A group trip sounds exciting. What's your budget range for this adventure - budget-friendly, mid-range, or luxury?", "ui": "budget"}`
           },
           ...messages
         ],
