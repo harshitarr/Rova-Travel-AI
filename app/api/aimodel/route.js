@@ -165,6 +165,8 @@ export async function POST(req) {
     if (userSelection) {
       let nextResponse;
       
+      console.log("User selection received:", userSelection);
+      
       if (userSelection.groupsize) {
         nextResponse = {
           resp: "Perfect! What's your budget range for this trip? Would you prefer budget-friendly, mid-range, or luxury options?",
@@ -191,6 +193,8 @@ export async function POST(req) {
           ui: "groupSize"
         };
       }
+
+      console.log("API responding with:", nextResponse);
 
       return NextResponse.json(
         { 

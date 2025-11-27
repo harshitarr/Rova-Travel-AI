@@ -41,24 +41,57 @@ const ChatBox = () => {
     };
 
     setMessages((prev) => [...prev, newMsg]);
-    const currentUserInput = userInput;
+    const currentUserInput = userInput.toLowerCase();
     setUserInput("");
     setIsLoading(true);
 
     try {
+      // Detect user selection patterns and send appropriate userSelection
+      let userSelection = null;
+      
+      // Check for budget patterns
+      if (currentUserInput.includes("budget") || currentUserInput.includes("cheap") || 
+          currentUserInput.includes("luxury") || currentUserInput.includes("moderate") ||
+          currentUserInput.includes("mid-range") || currentUserInput.includes("average")) {
+        userSelection = { budget: userInput };
+      }
+      // Check for group size patterns
+      else if (currentUserInput.includes("couple") || currentUserInput.includes("solo") || 
+               currentUserInput.includes("family") || currentUserInput.includes("friends") ||
+               currentUserInput.includes("people") || currentUserInput.includes("person")) {
+        userSelection = { groupsize: userInput };
+      }
+      // Check for duration patterns
+      else if (currentUserInput.includes("day") || currentUserInput.includes("week") || 
+               /\d+\s*(day|days|week|weeks)/.test(currentUserInput)) {
+        userSelection = { duration: userInput };
+      }
+      // Check for interest patterns
+      else if (currentUserInput.includes("adventure") || currentUserInput.includes("culture") || 
+               currentUserInput.includes("food") || currentUserInput.includes("relaxation") ||
+               currentUserInput.includes("beach") || currentUserInput.includes("nightlife") ||
+               currentUserInput.includes("sightseeing") || currentUserInput.includes("shopping")) {
+        userSelection = { interests: userInput };
+      }
+
       // Use ref to get current messages without dependency
       const result = await axios.post("/api/aimodel", {
         messages: [...messagesRef.current, newMsg],
+        userSelection: userSelection
       });
 
       if (result.data.success) {
+        const responseMessage = {
+          role: "assistant",
+          content: result.data.resp || result.data.message || "I'm here to help!",
+          ui: result.data.ui || null,
+        };
+        
+        console.log("Adding message with UI:", responseMessage);
+        
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: result.data.resp || result.data.message,
-            ui: result?.data?.ui,
-          },
+          responseMessage
         ]);
       } else {
         throw new Error(result.data.error || "Failed to get response");
@@ -155,13 +188,17 @@ const ChatBox = () => {
         });
 
         if (result.data.success) {
+          const responseMessage = {
+            role: "assistant",
+            content: result.data.resp || result.data.message || "Great! Let's continue planning.",
+            ui: result.data.ui || null,
+          };
+          
+          console.log("Group size selection response:", responseMessage);
+          
           setMessages((prev) => [
             ...prev,
-            {
-              role: "assistant",
-              content: result.data.resp || result.data.message,
-              ui: result?.data?.ui,
-            },
+            responseMessage
           ]);
         }
         console.log(result.data);
@@ -274,22 +311,39 @@ const ChatBox = () => {
   );
 
   // -----------------------------
-  // Render dynamic UI sent by assistant
+  // Render dynamic UI sent by assistant (Memoized components)
   // -----------------------------
+  const BudgetComponent = useCallback(() => <BudgetUi onSelectedOption={handleBudgetSelect} />, [handleBudgetSelect]);
+  const GroupSizeComponent = useCallback(() => <GroupSizeUi onSelectedOption={handleGroupSizeSelect} />, [handleGroupSizeSelect]);
+  const DurationComponent = useCallback(() => <DurationUi onSelectedOption={handleDurationSelect} />, [handleDurationSelect]);
+  const InterestComponent = useCallback(() => <TravelInterest onSelectedOption={handleInterestSelect} />, [handleInterestSelect]);
+
   const RenderGenerativeUi = useCallback(
     (ui) => {
-      if (ui === "budget") {
-        return <BudgetUi onSelectedOption={handleBudgetSelect} />;
-      } else if (ui === "groupSize") {
-        return <GroupSizeUi onSelectedOption={handleGroupSizeSelect} />;
-      } else if (ui === "duration") {
-        return <DurationUi onSelectedOption={handleDurationSelect} />;
-      } else if (ui === "interests") {
-        return <TravelInterest onSelectedOption={handleInterestSelect} />;
+      if (!ui || ui === "" || ui === "general" || ui === "final") {
+        return null;
       }
-      return null;
+      
+      try {
+        switch (ui) {
+          case "budget":
+            return <BudgetComponent />;
+          case "groupSize":
+            return <GroupSizeComponent />;
+          case "duration":
+            return <DurationComponent />;
+          case "interests":
+            return <InterestComponent />;
+          default:
+            console.log("No matching UI component for:", ui);
+            return null;
+        }
+      } catch (error) {
+        console.error("Error rendering UI component:", error);
+        return null;
+      }
     },
-    [handleBudgetSelect, handleGroupSizeSelect, handleDurationSelect, handleInterestSelect]
+    [BudgetComponent, GroupSizeComponent, DurationComponent, InterestComponent]
   );
 
   // -----------------------------
@@ -321,8 +375,12 @@ const ChatBox = () => {
             >
               <p className="text-sm leading-relaxed">{message.content}</p>
 
-              {/* UI Components */}
-              {RenderGenerativeUi(message.ui ?? "")}
+              {/* UI Components - Only render for assistant messages with valid UI */}
+              {message.role === "assistant" && message.ui && message.ui !== "general" && message.ui !== "final" && (
+                <div className="mt-3">
+                  {RenderGenerativeUi(message.ui)}
+                </div>
+              )}
             </div>
           </div>
         ))}
