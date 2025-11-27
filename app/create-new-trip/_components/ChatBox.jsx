@@ -1,91 +1,333 @@
-"use client"
-import React, { useState } from 'react'
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
-import axios from 'axios';
-import EmptyBoxState from './EmptyBoxState';
-import GroupSizeUi from './GroupSizeUi';
-import BudgetUi from './BudgetUi';
+"use client";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
+import axios from "axios";
+import EmptyBoxState from "./EmptyBoxState";
+import GroupSizeUi from "./GroupSizeUi";
+import BudgetUi from "./BudgetUi";
+import DurationUi from "./DurationUi";
+import TravelInterest from "./TravelInterest";
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
-  const [userInput, setUserInput] = useState('');
+  const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const messagesRef = useRef([]);
+  const chatContainerRef = useRef(null);
 
-  const RenderGenerativeUi = (ui) => {
-    if(ui === 'budget'){
-      //Budget UI Component can be rendered here
-      return <BudgetUi onSelectedOption={(v)=>{setUserInput(v);onSend();}} />
+  // Keep ref in sync with state
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-    else if(ui === 'groupSize'){
-      //groupSize UI Component can be rendered here
-      return <GroupSizeUi onSelectedOption={(v)=>{setUserInput(v);onSend();}} />
-    }
-    return null;
-  };
+  }, [messages, isLoading]);
 
-  const onSend = async () => {
+  // -----------------------------
+  // STABLE onSend function
+  // -----------------------------
+  const onSend = useCallback(async () => {
     if (!userInput?.trim() || isLoading) return;
 
     const newMsg = {
-      role: 'user',
-      content: userInput
+      role: "user",
+      content: userInput,
     };
 
     setMessages((prev) => [...prev, newMsg]);
-    setUserInput('');
+    const currentUserInput = userInput;
+    setUserInput("");
     setIsLoading(true);
 
     try {
-      const result = await axios.post('/api/aimodel', {
-        messages: [...messages, newMsg],
+      // Use ref to get current messages without dependency
+      const result = await axios.post("/api/aimodel", {
+        messages: [...messagesRef.current, newMsg],
       });
 
       if (result.data.success) {
-        setMessages((prev) => [...prev, {
-          role: 'assistant',
-          content: result.data.resp || result.data.message,
-          ui:result?.data?.ui
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: result.data.resp || result.data.message,
+            ui: result?.data?.ui,
+          },
+        ]);
       } else {
-        throw new Error(result.data.error || 'Failed to get response');
+        throw new Error(result.data.error || "Failed to get response");
       }
 
       console.log(result.data);
     } catch (error) {
-      console.error('Error sending message:', error);
-      
-      // Add error message to chat
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again or check your internet connection.'
-      }]);
+      console.error("Error sending message:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Sorry, I encountered an error. Please try again or check your internet connection.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userInput, isLoading]);
 
+  // -----------------------------
+  // STABLE handlers for UI components
+  // -----------------------------
+  const handleBudgetSelect = useCallback((budget, isDoubleTap = false) => {
+    console.log("Budget Selected:", budget, "Double tap:", isDoubleTap);
+    
+    if (!isDoubleTap) {
+      // Single tap - populate textarea
+      setUserInput(budget);
+      return;
+    }
+
+    // Double tap - send directly
+    const newMsg = {
+      role: "user",
+      content: `Selected budget: ${budget}`,
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setIsLoading(true);
+
+    // Simulate API call for budget selection
+    setTimeout(async () => {
+      try {
+        const result = await axios.post("/api/aimodel", {
+          messages: [],
+          userSelection: { budget }
+        });
+
+        if (result.data.success) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: result.data.resp || result.data.message,
+              ui: result?.data?.ui,
+            },
+          ]);
+        }
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000);
+  }, []);
+
+  const handleGroupSizeSelect = useCallback((groupsize, isDoubleTap = false) => {
+    console.log("Group Size Selected:", groupsize, "Double tap:", isDoubleTap);
+    
+    if (!isDoubleTap) {
+      // Single tap - populate textarea
+      setUserInput(groupsize);
+      return;
+    }
+
+    // Double tap - send directly
+    const newMsg = {
+      role: "user", 
+      content: `Selected group size: ${groupsize}`,
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setIsLoading(true);
+
+    // Simulate API call for group size selection
+    setTimeout(async () => {
+      try {
+        const result = await axios.post("/api/aimodel", {
+          messages: [],
+          userSelection: { groupsize }
+        });
+
+        if (result.data.success) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: result.data.resp || result.data.message,
+              ui: result?.data?.ui,
+            },
+          ]);
+        }
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000);
+  }, []);
+
+  const handleDurationSelect = useCallback((duration, isDoubleTap = false) => {
+    console.log("Duration Selected:", duration, "Double tap:", isDoubleTap);
+    
+    if (!isDoubleTap) {
+      // Single tap - populate textarea
+      setUserInput(duration);
+      return;
+    }
+
+    // Double tap - send directly
+    const newMsg = {
+      role: "user",
+      content: `Selected duration: ${duration}`,
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setIsLoading(true);
+
+    // Simulate API call for duration selection
+    setTimeout(async () => {
+      try {
+        const result = await axios.post("/api/aimodel", {
+          messages: [],
+          userSelection: { duration }
+        });
+
+        if (result.data.success) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: result.data.resp || result.data.message,
+              ui: result?.data?.ui,
+            },
+          ]);
+        }
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000);
+  }, []);
+
+  const handleInterestSelect = useCallback((interests, isDoubleTap = false) => {
+    console.log("Interests Selected:", interests, "Double tap:", isDoubleTap);
+    
+    const interestText = Array.isArray(interests) ? interests.join(", ") : interests;
+    
+    if (!isDoubleTap) {
+      // Single tap - populate textarea
+      setUserInput(interestText);
+      return;
+    }
+
+    // Double tap - send directly
+    const newMsg = {
+      role: "user",
+      content: `Selected interests: ${interestText}`,
+    };
+
+    setMessages((prev) => [...prev, newMsg]);
+    setIsLoading(true);
+
+    // Simulate API call for interests selection
+    setTimeout(async () => {
+      try {
+        const result = await axios.post("/api/aimodel", {
+          messages: [],
+          userSelection: { interests }
+        });
+
+        if (result.data.success) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: result.data.resp || result.data.message,
+              ui: result?.data?.ui,
+            },
+          ]);
+        }
+        console.log(result.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 1000);
+  }, []);
+
+  const handleEmptySelect = useCallback(
+    (v) => {
+      setUserInput(v);
+      onSend();
+    },
+    [onSend]
+  );
+
+  // -----------------------------
+  // Render dynamic UI sent by assistant
+  // -----------------------------
+  const RenderGenerativeUi = useCallback(
+    (ui) => {
+      if (ui === "budget") {
+        return <BudgetUi onSelectedOption={handleBudgetSelect} />;
+      } else if (ui === "groupSize") {
+        return <GroupSizeUi onSelectedOption={handleGroupSizeSelect} />;
+      } else if (ui === "duration") {
+        return <DurationUi onSelectedOption={handleDurationSelect} />;
+      } else if (ui === "interests") {
+        return <TravelInterest onSelectedOption={handleInterestSelect} />;
+      }
+      return null;
+    },
+    [handleBudgetSelect, handleGroupSizeSelect, handleDurationSelect, handleInterestSelect]
+  );
+
+  // -----------------------------
+  // MAIN RENDER
+  // -----------------------------
   return (
     <div className="h-[85vh] flex flex-col">
-      {messages?.length===0 && <EmptyBoxState onSelectOption={(v)=>{setUserInput(v);onSend()}} />}
-      <section className='flex-1 overflow-y-auto px-4 py-2 space-y-3'>
-        {/* Display Messages */}
+      {messages?.length === 0 && (
+        <EmptyBoxState onSelectOption={handleEmptySelect} />
+      )}
+
+      <section 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-2 space-y-3 scroll-smooth"
+      >
         {messages.map((message, index) => (
-          <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
-              message.role === 'user' 
-                ? 'bg-[#F472B6] text-white rounded-br-md' 
-                : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'
-            }`}>
+          <div
+            key={index}
+            className={`flex ${
+              message.role === "user" ? "justify-end" : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
+                message.role === "user"
+                  ? "bg-[#F472B6] text-white rounded-br-md"
+                  : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"
+              }`}
+            >
               <p className="text-sm leading-relaxed">{message.content}</p>
-              {RenderGenerativeUi(message.ui ?? '')}
+
+              {/* UI Components */}
+              {RenderGenerativeUi(message.ui ?? "")}
             </div>
           </div>
         ))}
-        
-        {/* Typing indicator when AI is responding */}
+
+        {/* Typing Indicator */}
         {isLoading && (
           <div className="flex justify-start">
             <div className="max-w-[70%] px-4 py-3 rounded-2xl rounded-bl-md bg-white border border-gray-200 shadow-sm">
@@ -93,34 +335,40 @@ const ChatBox = () => {
                 <span className="text-gray-500 text-sm">typing</span>
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  <div
+                    className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
                 </div>
               </div>
             </div>
           </div>
         )}
       </section>
-       
-      {/* User input */}
+
+      {/* USER INPUT */}
       <section className="p-4 bg-white border-t border-gray-200">
-        {/* Input Box */}
-        <div className='w-full max-w-4xl mx-auto'>
-          <div className='flex items-end gap-3 bg-gray-50 rounded-3xl px-4 py-3 border border-gray-300'>
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="flex items-end gap-3 bg-gray-50 rounded-3xl px-4 py-3 border border-gray-300">
             <Textarea
-              placeholder='Message Rova AI...'
+              placeholder="Message Rova AI..."
               className="flex-1 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none text-base min-h-10 max-h-32 p-0 placeholder:text-gray-500"
-              onChange={(event) => setUserInput(event.target.value)}
+              onChange={(e) => setUserInput(e.target.value)}
               value={userInput}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   onSend();
                 }
               }}
             />
+
             <Button
-              size={'icon'}
+              size="icon"
               className="bg-[#F472B6] hover:bg-[#EC4899] h-10 w-10 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               onClick={onSend}
               disabled={!userInput?.trim() || isLoading}
@@ -128,15 +376,14 @@ const ChatBox = () => {
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Send className='h-4 w-4' />
+                <Send className="h-4 w-4" />
               )}
             </Button>
           </div>
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default ChatBox
-
+export default ChatBox;

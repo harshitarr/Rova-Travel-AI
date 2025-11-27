@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 
-const DurationUi = ({onSelectedOption}) => {
+const DurationUi = ({ onSelectedOption }) => {
   const [days, setDays] = useState(3);
+  const clickTimeoutRef = useRef(null);
 
   const incrementDays = () => {
     if (days < 30) setDays(days + 1);
@@ -13,15 +14,32 @@ const DurationUi = ({onSelectedOption}) => {
   };
 
   const handleConfirm = () => {
-    onSelectedOption(`${days} Day${days > 1 ? 's' : ''}`);
+    onSelectedOption(`${days} Day${days > 1 ? 's' : ''}`, true); // Always send directly on confirm button
+  };
+
+  const handleDaysClick = () => {
+    const durationText = `${days} Day${days > 1 ? 's' : ''}`;
+    
+    if (clickTimeoutRef.current) {
+      // Double click detected
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+      onSelectedOption(durationText, true); // true for double tap - send directly
+    } else {
+      // Single click - wait to see if there's a second click
+      clickTimeoutRef.current = setTimeout(() => {
+        onSelectedOption(durationText, false); // false for single tap - populate textarea
+        clickTimeoutRef.current = null;
+      }, 300); // 300ms delay to detect double click
+    }
   };
 
   return (
-    <div className='flex flex-col items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm mt-2 max-w-sm mx-auto'>
+    <div className="flex flex-col items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm mt-2 max-w-sm mx-auto">
       <h3 className="text-base font-medium text-gray-800 mb-4 text-center">
         How many days do you want to travel?
       </h3>
-      
+
       {/* Counter Section */}
       <div className="flex items-center justify-center gap-4 mb-6">
         {/* Minus Button */}
@@ -32,12 +50,16 @@ const DurationUi = ({onSelectedOption}) => {
         >
           −
         </button>
-        
-        {/* Days Display */}
-        <div className="text-xl font-semibold text-gray-800 min-w-[80px] text-center">
+
+        {/* Days Display - Clickable for single/double tap */}
+        <div 
+          className="text-xl font-semibold text-gray-800 min-w-20 text-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors duration-200"
+          onClick={handleDaysClick}
+          title="Single click to edit, double click to send"
+        >
           {days} Day{days > 1 ? 's' : ''}
         </div>
-        
+
         {/* Plus Button */}
         <button
           onClick={incrementDays}
@@ -47,7 +69,7 @@ const DurationUi = ({onSelectedOption}) => {
           +
         </button>
       </div>
-      
+
       {/* Confirm Button */}
       <Button
         onClick={handleConfirm}
@@ -56,7 +78,7 @@ const DurationUi = ({onSelectedOption}) => {
         Confirm
       </Button>
     </div>
-  )
-}
+  );
+};
 
-export default DurationUi
+export default DurationUi;

@@ -152,12 +152,54 @@ Example response: {"resp": "Perfect! A group trip sounds exciting. What's your b
 // API Route Handler
 export async function POST(req) {
   try {
-    const { messages } = await req.json();
+    const { messages, userSelection } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
         { success: false, error: "Messages array is required" },
         { status: 400 }
+      );
+    }
+
+    // Handle user selections with specific UI flow
+    if (userSelection) {
+      let nextResponse;
+      
+      if (userSelection.groupsize) {
+        nextResponse = {
+          resp: "Perfect! What's your budget range for this trip? Would you prefer budget-friendly, mid-range, or luxury options?",
+          ui: "budget"
+        };
+      } else if (userSelection.budget) {
+        nextResponse = {
+          resp: "Excellent! How many days are you planning for this trip?",
+          ui: "duration"
+        };
+      } else if (userSelection.duration) {
+        nextResponse = {
+          resp: "Almost there! What are your main interests for this trip? For example: adventure activities, cultural experiences, food tours, relaxation, nightlife, or sightseeing?",
+          ui: "interests"
+        };
+      } else if (userSelection.interests) {
+        nextResponse = {
+          resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you! 🌟",
+          ui: "final"
+        };
+      } else {
+        nextResponse = {
+          resp: "Let's continue planning your trip! Who will be joining you?",
+          ui: "groupSize"
+        };
+      }
+
+      return NextResponse.json(
+        { 
+          success: true, 
+          resp: nextResponse.resp, 
+          ui: nextResponse.ui,
+          message: nextResponse.resp
+        },
+        { status: 200 }
       );
     }
 
