@@ -209,6 +209,27 @@ export async function POST(req) {
 
     const result = await createTripPlan(messages);
 
+    // If Google AI returns general UI, determine the correct UI based on conversation context
+    if (result.ui === "general") {
+      const lastMessages = messages.slice(-3).map(m => m.content?.toLowerCase() || "");
+      const allMessages = messages.map(m => m.content?.toLowerCase() || "").join(" ");
+      
+      // Check conversation progress and assign appropriate UI
+      if (allMessages.includes("how many people") || allMessages.includes("who will be") || 
+          result.resp.toLowerCase().includes("solo") || result.resp.toLowerCase().includes("couple") ||
+          result.resp.toLowerCase().includes("family") || result.resp.toLowerCase().includes("friends")) {
+        result.ui = "groupSize";
+      } else if (allMessages.includes("budget") || result.resp.toLowerCase().includes("budget") ||
+                 result.resp.toLowerCase().includes("luxury") || result.resp.toLowerCase().includes("mid-range")) {
+        result.ui = "budget";
+      } else if (allMessages.includes("how many days") || result.resp.toLowerCase().includes("days")) {
+        result.ui = "duration";
+      } else if (allMessages.includes("interests") || result.resp.toLowerCase().includes("interests") ||
+                 result.resp.toLowerCase().includes("adventure") || result.resp.toLowerCase().includes("culture")) {
+        result.ui = "interests";
+      }
+    }
+
     return NextResponse.json(
       { 
         success: true, 

@@ -49,8 +49,16 @@ const ChatBox = () => {
       // Detect user selection patterns and send appropriate userSelection
       let userSelection = null;
       
+      // Check for initial trip creation prompts
+      if (currentUserInput.includes("create new trip") || currentUserInput.includes("new trip") ||
+          currentUserInput.includes("plan a trip") || currentUserInput.includes("trip planning") ||
+          currentUserInput.includes("inspire me where to go") || currentUserInput.includes("adventure destinations") ||
+          currentUserInput.includes("discover historical gems") || currentUserInput.includes("historical gems")) {
+        // Don't set userSelection for initial prompts - let API handle the conversation start
+        userSelection = null;
+      }
       // Check for budget patterns
-      if (currentUserInput.includes("budget") || currentUserInput.includes("cheap") || 
+      else if (currentUserInput.includes("budget") || currentUserInput.includes("cheap") || 
           currentUserInput.includes("luxury") || currentUserInput.includes("moderate") ||
           currentUserInput.includes("mid-range") || currentUserInput.includes("average")) {
         userSelection = { budget: userInput };
@@ -320,7 +328,7 @@ const ChatBox = () => {
 
   const RenderGenerativeUi = useCallback(
     (ui) => {
-      if (!ui || ui === "" || ui === "general" || ui === "final") {
+      if (!ui || ui === "" || ui === "general" || ui === "final" || ui === "source" || ui === "destination") {
         return null;
       }
       
@@ -335,7 +343,6 @@ const ChatBox = () => {
           case "interests":
             return <InterestComponent />;
           default:
-            console.log("No matching UI component for:", ui);
             return null;
         }
       } catch (error) {
@@ -376,7 +383,9 @@ const ChatBox = () => {
               <p className="text-sm leading-relaxed">{message.content}</p>
 
               {/* UI Components - Only render for assistant messages with valid UI */}
-              {message.role === "assistant" && message.ui && message.ui !== "general" && message.ui !== "final" && (
+              {message.role === "assistant" && message.ui && 
+               message.ui !== "general" && message.ui !== "final" && 
+               message.ui !== "source" && message.ui !== "destination" && (
                 <div className="mt-3">
                   {RenderGenerativeUi(message.ui)}
                 </div>
