@@ -32,24 +32,61 @@ const mockResponses = [
   }
 ];
 
-// Google AI (Gemini) integration function
-async function createTripPlan(messages) {
-  try {
-    // Check if Google AI is configured
-    const hasGoogleAI = process.env.OPENAI_API_KEY && 
-                       process.env.OPENAI_API_KEY !== 'your_openai_api_key_here' &&
-                       process.env.OPENAI_BASE_URL;
-    
-    if (hasGoogleAI) {
-      // Import OpenAI client (configured for Google AI endpoint)
-      const { openai } = await import("@/configs/openai");
-      
-      const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gemini-2.0-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are an AI Trip Planner Agent. Help users plan amazing trips through interactive conversation.
+const FINAL_PROMPT = `Generate a COMPLETE Travel Plan with all given details. Provide Hotels options list with HotelName,
+Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and suggest a FULL itinerary with placeName, Place Details, Place Image Url,
+Geo Coordinates, Place address, ticket Pricing, Time travel each of the location, with EACH DAY plan for the ENTIRE duration and best time to visit in JSON format.
+
+IMPORTANT: Generate itinerary for ALL days specified in the duration. If user requested 3 days, provide activities for Day 1, Day 2, AND Day 3. Do not truncate or skip days.
+
+Output Schema:
+{
+"trip_plan": {
+"destination": "string",
+"duration": "string",
+"origin": "string",
+"budget": "string",
+"groupSize": "string",
+"interests": "string",
+"hotels": [
+{
+"hotel_name": "string",
+"hotel_address": "string",
+"price_per_night": "string",
+"hotel_image_url": "string",
+"geo_coordinates": {
+"latitude": "number",
+"longitude": "number"
+},
+"rating": "number",
+"description": "string"
+}
+],
+"itinerary": [
+{
+"day": "number",
+"day_plan": "string",
+"best_time_to_visit_day": "string",
+"activities": [
+{
+"place_name": "string",
+"place_details": "string",
+"place_image_url": "string",
+"geo_coordinates": {
+"latitude": "number",
+"longitude": "number"
+},
+"place_address": "string",
+"ticket_pricing": "string",
+"time_travel_each_location": "string",
+"best_time_to_visit": "string"
+}
+]
+}
+]
+}
+}`;
+
+const PROMPT = `You are an AI Trip Planner Agent. Help users plan amazing trips through interactive conversation.
 
 Ask ONE question at a time in this order:
 1. Starting location (where are you traveling from?)
@@ -71,53 +108,227 @@ UI step options: "source", "destination", "groupSize", "budget", "duration", "in
 
 When you have all information, set ui to "final" and create a complete trip summary.
 
-Example response: {"resp": "Perfect! A group trip sounds exciting. What's your budget range for this adventure - budget-friendly, mid-range, or luxury?", "ui": "budget"}`
+Example response: {"resp": "Perfect! A group trip sounds exciting. What's your budget range for this adventure - budget-friendly, mid-range, or luxury?", "ui": "budget"}`;
+
+// Reusable configuration for user selection flow
+const SELECTION_FLOW = {
+  groupsize: {
+    resp: "Perfect! What's your budget range for this trip? Would you prefer budget-friendly, mid-range, or luxury options?",
+    ui: "budget"
+  },
+  budget: {
+    resp: "Excellent! How many days are you planning for this trip?",
+    ui: "duration"
+  },
+  duration: {
+    resp: "Almost there! What are your main interests for this trip? For example: adventure activities, cultural experiences, food tours, relaxation, nightlife, or sightseeing?",
+    ui: "interests"
+  },
+  interests: {
+    resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you! 🌟",
+    ui: "final"
+  },
+  default: {
+    resp: "Let's continue planning your trip! Who will be joining you?",
+    ui: "groupSize"
+  }
+};
+
+// Reusable UI detection patterns
+const UI_DETECTION_PATTERNS = {
+  groupSize: {
+    keywords: ["how many people", "who will be", "solo", "couple", "family", "friends"],
+    ui: "groupSize"
+  },
+  budget: {
+    keywords: ["budget", "luxury", "mid-range"],
+    ui: "budget"
+  },
+  duration: {
+    keywords: ["how many days", "days"],
+    ui: "duration"
+  },
+  interests: {
+    keywords: ["interests", "adventure", "culture"],
+    ui: "interests"
+  }
+};
+
+// Reusable response formatter
+function createApiResponse(resp, ui, success = true) {
+  return {
+    success,
+    resp,
+    ui,
+    message: resp
+  };
+}
+
+// Reusable response cleaner and parser
+function cleanAndParseResponse(responseText) {
+  let cleanedResponse = responseText.trim();
+  
+  // Remove markdown code block wrapper if present
+  if (cleanedResponse.startsWith('```json')) {
+    cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleanedResponse.startsWith('```')) {
+    cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  
+  try {
+    const response = JSON.parse(cleanedResponse);
+    return {
+      success: true,
+      data: {
+        resp: response.resp || responseText,
+        ui: response.ui || "general"
+      }
+    };
+  } catch (parseError) {
+    console.log("JSON parse failed, raw response:", responseText);
+    
+    let extractedText = cleanedResponse;
+    if (extractedText.includes('"resp"')) {
+      const respMatch = extractedText.match(/"resp":\s*"([^"]+)"/);
+      if (respMatch) {
+        extractedText = respMatch[1];
+      }
+    }
+    
+    return {
+      success: false,
+      data: {
+        resp: extractedText || "I'm here to help you plan your trip! Where would you like to start?",
+        ui: "general"
+      }
+    };
+  }
+}
+
+// Reusable error handler
+function handleApiError(err) {
+  console.error("Trip Planner Error:", err);
+  
+  if (err.message?.includes('401') || err.message?.includes('unauthorized')) {
+    return {
+      resp: "There's an issue with the API key configuration. Please check your Google AI API key.",
+      ui: "error"
+    };
+  } else if (err.message?.includes('quota') || err.message?.includes('rate limit')) {
+    return {
+      resp: "API quota exceeded. Please try again later or check your Google AI billing.",
+      ui: "error"
+    };
+  } else {
+    return {
+      resp: "I'm experiencing technical difficulties. Let me use my built-in knowledge to help plan your trip! Where would you like to go?",
+      ui: "fallback"
+    };
+  }
+}
+
+// Reusable UI detection logic
+function detectUIFromContext(result, messages) {
+  if (result.ui !== "general") return result;
+  
+  const allMessages = messages.map(m => m.content?.toLowerCase() || "").join(" ");
+  
+  for (const [key, pattern] of Object.entries(UI_DETECTION_PATTERNS)) {
+    const hasKeyword = pattern.keywords.some(keyword => 
+      allMessages.includes(keyword) || result.resp.toLowerCase().includes(keyword)
+    );
+    
+    if (hasKeyword) {
+      result.ui = pattern.ui;
+      break;
+    }
+  }
+  
+  return result;
+}
+
+// Reusable user selection handler
+function handleUserSelection(userSelection) {
+  console.log("User selection received:", userSelection);
+  
+  const selectionKey = Object.keys(userSelection)[0];
+  console.log("Selection key:", selectionKey);
+  
+  const response = SELECTION_FLOW[selectionKey] || SELECTION_FLOW.default;
+  console.log("Selected response from SELECTION_FLOW:", response);
+  
+  console.log("API responding with:", response);
+  
+  return response;
+}
+
+// Dynamic token calculator based on trip requirements
+function calculateTokens(messages, isFinal = false) {
+  if (!isFinal) {
+    // For regular conversation, use minimal tokens
+    return 1000;
+  }
+  
+  // Extract duration from conversation for final trip planning
+  const conversationText = messages.map(m => m.content || "").join(" ").toLowerCase();
+  
+  // Try to extract number of days from conversation
+  let days = 3; // default
+  const dayMatches = conversationText.match(/(\d+)\s*days?/);
+  const weekMatches = conversationText.match(/(\d+)\s*weeks?/);
+  
+  if (dayMatches) {
+    days = parseInt(dayMatches[1]);
+  } else if (weekMatches) {
+    days = parseInt(weekMatches[1]) * 7;
+  }
+  
+  // Dynamic token calculation based on trip complexity
+  const baseTokens = 1500; // Base for hotels + metadata
+  const tokensPerDay = 800; // Estimated tokens per day of itinerary
+  const complexityMultiplier = days > 7 ? 0.9 : 1.0; // Slightly less detail for very long trips
+  
+  const calculatedTokens = Math.ceil((baseTokens + (days * tokensPerDay)) * complexityMultiplier);
+  
+  // Set reasonable bounds
+  const minTokens = 2000;
+  const maxTokens = 12000; // Prevent excessive token usage
+  
+  const finalTokens = Math.max(minTokens, Math.min(maxTokens, calculatedTokens));
+  
+  console.log(`Dynamic tokens: ${days} days = ${finalTokens} tokens`);
+  return finalTokens;
+}
+
+// Google AI (Gemini) integration function
+async function createTripPlan(messages, isFinal = false) {
+  try {
+    // Check if Google AI is configured
+    const hasGoogleAI = process.env.OPENAI_API_KEY && 
+                       process.env.OPENAI_API_KEY !== 'your_openai_api_key_here' &&
+                       process.env.OPENAI_BASE_URL;
+    
+    if (hasGoogleAI) {
+      // Import OpenAI client (configured for Google AI endpoint)
+      const { openai } = await import("@/configs/openai");
+      
+      const completion = await openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || "gemini-2.0-flash",
+        messages: [
+          {
+            role: "system",
+            content: isFinal ? FINAL_PROMPT : PROMPT
           },
           ...messages
         ],
         temperature: 0.8,
-        max_tokens: 1000
+        max_tokens: calculateTokens(messages, isFinal)
       });
 
       const responseText = completion.choices[0].message.content;
+      const parseResult = cleanAndParseResponse(responseText);
       
-      // Clean and parse the response - handle markdown code blocks
-      let cleanedResponse = responseText.trim();
-      
-      // Remove markdown code block wrapper if present
-      if (cleanedResponse.startsWith('```json')) {
-        cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (cleanedResponse.startsWith('```')) {
-        cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      
-      // Try to parse as JSON
-      try {
-        const response = JSON.parse(cleanedResponse);
-        // Ensure response has required fields
-        return {
-          resp: response.resp || responseText,
-          ui: response.ui || "general"
-        };
-      } catch (parseError) {
-        console.log("JSON parse failed, raw response:", responseText);
-        
-        // If JSON parsing fails, extract text and create structured response
-        // Try to extract meaningful content
-        let extractedText = cleanedResponse;
-        if (extractedText.includes('"resp"')) {
-          // Try to extract just the resp value
-          const respMatch = extractedText.match(/"resp":\s*"([^"]+)"/);
-          if (respMatch) {
-            extractedText = respMatch[1];
-          }
-        }
-        
-        return {
-          resp: extractedText || "I'm here to help you plan your trip! Where would you like to start?",
-          ui: "general"
-        };
-      }
+      return parseResult.data;
     } else {
       // Fallback mock responses for testing without API key
       const messageCount = messages.length;
@@ -127,32 +338,14 @@ Example response: {"resp": "Perfect! A group trip sounds exciting. What's your b
     }
 
   } catch (err) {
-    console.error("Trip Planner Error:", err);
-    
-    // Check the specific error type
-    if (err.message?.includes('401') || err.message?.includes('unauthorized')) {
-      return {
-        resp: "There's an issue with the API key configuration. Please check your Google AI API key.",
-        ui: "error"
-      };
-    } else if (err.message?.includes('quota') || err.message?.includes('rate limit')) {
-      return {
-        resp: "API quota exceeded. Please try again later or check your Google AI billing.",
-        ui: "error"
-      };
-    } else {
-      return {
-        resp: "I'm experiencing technical difficulties. Let me use my built-in knowledge to help plan your trip! Where would you like to go?",
-        ui: "fallback"
-      };
-    }
+    return handleApiError(err);
   }
 }
 
 // API Route Handler
 export async function POST(req) {
   try {
-    const { messages, userSelection } = await req.json();
+    const { messages, userSelection ,isFinal} = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -163,92 +356,20 @@ export async function POST(req) {
 
     // Handle user selections with specific UI flow
     if (userSelection) {
-      let nextResponse;
-      
-      console.log("User selection received:", userSelection);
-      
-      if (userSelection.groupsize) {
-        nextResponse = {
-          resp: "Perfect! What's your budget range for this trip? Would you prefer budget-friendly, mid-range, or luxury options?",
-          ui: "budget"
-        };
-      } else if (userSelection.budget) {
-        nextResponse = {
-          resp: "Excellent! How many days are you planning for this trip?",
-          ui: "duration"
-        };
-      } else if (userSelection.duration) {
-        nextResponse = {
-          resp: "Almost there! What are your main interests for this trip? For example: adventure activities, cultural experiences, food tours, relaxation, nightlife, or sightseeing?",
-          ui: "interests"
-        };
-      } else if (userSelection.interests) {
-        nextResponse = {
-          resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you! 🌟",
-          ui: "final"
-        };
-      } else {
-        nextResponse = {
-          resp: "Let's continue planning your trip! Who will be joining you?",
-          ui: "groupSize"
-        };
-      }
-
-      console.log("API responding with:", nextResponse);
-
-      return NextResponse.json(
-        { 
-          success: true, 
-          resp: nextResponse.resp, 
-          ui: nextResponse.ui,
-          message: nextResponse.resp
-        },
-        { status: 200 }
-      );
+      const nextResponse = handleUserSelection(userSelection);
+      return NextResponse.json(createApiResponse(nextResponse.resp, nextResponse.ui), { status: 200 });
     }
 
-    const result = await createTripPlan(messages);
+    const result = await createTripPlan(messages, isFinal);
+    const finalResult = detectUIFromContext(result, messages);
 
-    // If Google AI returns general UI, determine the correct UI based on conversation context
-    if (result.ui === "general") {
-      const lastMessages = messages.slice(-3).map(m => m.content?.toLowerCase() || "");
-      const allMessages = messages.map(m => m.content?.toLowerCase() || "").join(" ");
-      
-      // Check conversation progress and assign appropriate UI
-      if (allMessages.includes("how many people") || allMessages.includes("who will be") || 
-          result.resp.toLowerCase().includes("solo") || result.resp.toLowerCase().includes("couple") ||
-          result.resp.toLowerCase().includes("family") || result.resp.toLowerCase().includes("friends")) {
-        result.ui = "groupSize";
-      } else if (allMessages.includes("budget") || result.resp.toLowerCase().includes("budget") ||
-                 result.resp.toLowerCase().includes("luxury") || result.resp.toLowerCase().includes("mid-range")) {
-        result.ui = "budget";
-      } else if (allMessages.includes("how many days") || result.resp.toLowerCase().includes("days")) {
-        result.ui = "duration";
-      } else if (allMessages.includes("interests") || result.resp.toLowerCase().includes("interests") ||
-                 result.resp.toLowerCase().includes("adventure") || result.resp.toLowerCase().includes("culture")) {
-        result.ui = "interests";
-      }
-    }
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        resp: result.resp, 
-        ui: result.ui,
-        message: result.resp
-      },
-      { status: 200 }
-    );
+    return NextResponse.json(createApiResponse(finalResult.resp, finalResult.ui), { status: 200 });
   } catch (error) {
     console.error("API Route Error:", error);
-    return NextResponse.json(
-      { 
-        success: true, 
-        resp: "I'm here to help plan your trip! What destination are you thinking about?",
-        ui: "fallback",
-        message: "I'm here to help plan your trip! What destination are you thinking about?"
-      },
-      { status: 200 }
+    const fallbackResponse = createApiResponse(
+      "I'm here to help plan your trip! What destination are you thinking about?",
+      "fallback"
     );
+    return NextResponse.json(fallbackResponse, { status: 200 });
   }
 }

@@ -9,6 +9,8 @@ import GroupSizeUi from "./GroupSizeUi";
 import BudgetUi from "./BudgetUi";
 import DurationUi from "./DurationUi";
 import TravelInterest from "./TravelInterest";
+import TravelLoadingAnimation from "./TravelLoadingAnimation";
+
 
 const ChatBox = () => {
   const [messages, setMessages] = useState([]);
@@ -16,6 +18,8 @@ const ChatBox = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesRef = useRef([]);
   const chatContainerRef = useRef(null);
+  const [isFinal,setIsFinal]=useState(false);
+  const [tripCompleted, setTripCompleted] = useState(false);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -147,7 +151,8 @@ const ChatBox = () => {
       try {
         const result = await axios.post("/api/aimodel", {
           messages: [],
-          userSelection: { budget }
+          userSelection: { budget },
+          isFinal: isFinal
         });
 
         if (result.data.success) {
@@ -192,7 +197,8 @@ const ChatBox = () => {
       try {
         const result = await axios.post("/api/aimodel", {
           messages: [],
-          userSelection: { groupsize }
+          userSelection: { groupsize },
+          isFinal: isFinal
         });
 
         if (result.data.success) {
@@ -241,7 +247,8 @@ const ChatBox = () => {
       try {
         const result = await axios.post("/api/aimodel", {
           messages: [],
-          userSelection: { duration }
+          userSelection: { duration },
+          isFinal:isFinal
         });
 
         if (result.data.success) {
@@ -288,7 +295,8 @@ const ChatBox = () => {
       try {
         const result = await axios.post("/api/aimodel", {
           messages: [],
-          userSelection: { interests }
+          userSelection: { interests },
+          isFinal: isFinal
         });
 
         if (result.data.success) {
@@ -318,6 +326,12 @@ const ChatBox = () => {
     [onSend]
   );
 
+  const handleViewTrip = useCallback(() => {
+    // Handle view trip action - could navigate to trip details page
+    console.log("View Trip clicked - navigate to trip details");
+    // You can add navigation logic here
+  }, []);
+
   // -----------------------------
   // Render dynamic UI sent by assistant (Memoized components)
   // -----------------------------
@@ -325,34 +339,59 @@ const ChatBox = () => {
   const GroupSizeComponent = useCallback(() => <GroupSizeUi onSelectedOption={handleGroupSizeSelect} />, [handleGroupSizeSelect]);
   const DurationComponent = useCallback(() => <DurationUi onSelectedOption={handleDurationSelect} />, [handleDurationSelect]);
   const InterestComponent = useCallback(() => <TravelInterest onSelectedOption={handleInterestSelect} />, [handleInterestSelect]);
+  const TravelLoadingComponent = useCallback(() => <TravelLoadingAnimation isGenerating={isLoading || (isFinal && !tripCompleted)} onViewTrip={handleViewTrip} />, [isLoading, isFinal, tripCompleted, handleViewTrip]);
 
   const RenderGenerativeUi = useCallback(
     (ui) => {
-      if (!ui || ui === "" || ui === "general" || ui === "final" || ui === "source" || ui === "destination") {
-        return null;
-      }
-      
-      try {
-        switch (ui) {
-          case "budget":
-            return <BudgetComponent />;
-          case "groupSize":
-            return <GroupSizeComponent />;
-          case "duration":
-            return <DurationComponent />;
-          case "interests":
-            return <InterestComponent />;
-          default:
-            return null;
-        }
-      } catch (error) {
-        console.error("Error rendering UI component:", error);
-        return null;
-      }
+      const uiComponents = {
+        budget: BudgetComponent,
+        groupSize: GroupSizeComponent,
+        duration: DurationComponent,
+        interests: InterestComponent,
+        final: TravelLoadingComponent
+      };
+
+      const Component = uiComponents[ui];
+      return Component ? <Component /> : null;
     },
-    [BudgetComponent, GroupSizeComponent, DurationComponent, InterestComponent]
+    [BudgetComponent, GroupSizeComponent, DurationComponent, InterestComponent, TravelLoadingComponent]
   );
 
+
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.ui === "final" && !isFinal && !isLoading) {
+      setIsFinal(true);
+      
+      // Trigger final trip plan generation
+      setTimeout(async () => {
+        try {
+          setIsLoading(true);
+          const result = await axios.post("/api/aimodel", {
+            messages: messagesRef.current,
+            isFinal: true
+          });
+
+          if (result.data.success) {
+            // Don't set ui: "final" again to prevent infinite loop
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: result.data.resp || result.data.message || "Your trip plan is ready!",
+              },
+            ]);
+            // Mark trip as completed
+            setTripCompleted(true);
+          }
+        } catch (error) {
+          console.error("Error generating final trip plan:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }, 1000);
+    }
+  }, [messages, isFinal, isLoading]);
   // -----------------------------
   // MAIN RENDER
   // -----------------------------
@@ -384,8 +423,7 @@ const ChatBox = () => {
 
               {/* UI Components - Only render for assistant messages with valid UI */}
               {message.role === "assistant" && message.ui && 
-               message.ui !== "general" && message.ui !== "final" && 
-               message.ui !== "source" && message.ui !== "destination" && (
+               message.ui !== "general" && message.ui !== "source" && message.ui !== "destination" && (
                 <div className="mt-3">
                   {RenderGenerativeUi(message.ui)}
                 </div>
