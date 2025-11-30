@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useCallback, useRef, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useUserDetail } from "@/app/provider";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -20,6 +22,7 @@ const ChatBox = () => {
   const chatContainerRef = useRef(null);
   const [isFinal,setIsFinal]=useState(false);
   const [tripCompleted, setTripCompleted] = useState(false);
+  const { user } = useUser();
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -383,6 +386,59 @@ const ChatBox = () => {
             ]);
             // Mark trip as completed
             setTripCompleted(true);
+
+            // Try to parse and save the trip_plan to the backend
+            (async () => {
+              try {
+                let parsed = null;
+                const respText = result.data.resp;
+
+                // Try direct JSON parse
+                try {
+                  parsed = JSON.parse(respText);
+                } catch (e) {
+                  // If AI returned something like "{...}" wrapped in text, try to extract JSON
+                  const start = respText.indexOf('{');
+                  const end = respText.lastIndexOf('}');
+                  if (start !== -1 && end !== -1 && end > start) {
+                    const jsonSubstring = respText.slice(start, end + 1);
+                    try {
+                      parsed = JSON.parse(jsonSubstring);
+                    } catch (e2) {
+                      console.warn('Failed to parse extracted JSON from AI response', e2);
+                    }
+                  }
+                }
+
+                // If parsed object contains trip_plan at top-level or under key 'trip_plan'
+                const tripPlanObj = parsed && (parsed.trip_plan || parsed.trip_plan === undefined ? parsed.trip_plan : parsed) || null;
+
+                if (tripPlanObj) {
+                  const savePayload = {
+                    clerkId: user?.id || (user?.userId ?? null),
+                    title: tripPlanObj.destination || tripPlanObj.title || 'Trip',
+                    destination: tripPlanObj.destination || '',
+                    budget: tripPlanObj.budget || '',
+                    groupSize: tripPlanObj.groupSize || '',
+                    interests: tripPlanObj.interests || [],
+                    trip_plan: tripPlanObj,
+                  };
+
+                  console.log('Saving trip to backend with payload:', savePayload);
+
+                  try {
+                    const saveResp = await axios.post('/api/tripdetails', savePayload);
+                    console.log('Save response:', saveResp.data);
+                  } catch (saveErr) {
+                    console.error('Error saving trip to backend:', saveErr.response?.data || saveErr.message || saveErr);
+                  }
+                } else {
+                  console.warn('Could not parse trip_plan from AI response; not saving.');
+                }
+              } catch (err) {
+                console.error('Unexpected error while saving trip:', err);
+              }
+            })();
           }
         } catch (error) {
           console.error("Error generating final trip plan:", error);
