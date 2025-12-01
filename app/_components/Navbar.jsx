@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
-import { Package ,Sparkles } from 'lucide-react';
+import { Package, Sparkles, Ticket } from 'lucide-react';
 
 
 const Navbar = () => {
     
     const [isMounted, setIsMounted] = useState(false);
+    const [credits, setCredits] = useState(null);
     const { user } = useUser();
     const currentPath = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,6 +24,28 @@ const Navbar = () => {
         setIsMenuOpen(false);
     }, [currentPath]); 
 
+    // Fetch user credits
+    useEffect(() => {
+        const fetchCredits = async () => {
+            if (user) {
+                try {
+                    const response = await fetch('/api/credits');
+                    const data = await response.json();
+                    console.log('Navbar credits fetch:', data);
+                    if (data.success) {
+                        setCredits(data.remaining);
+                    }
+                } catch (error) {
+                    console.error('Error fetching credits:', error);
+                }
+            }
+        };
+        fetchCredits();
+        
+        // Refresh credits every 30 seconds to keep it updated
+        const interval = setInterval(fetchCredits, 30000);
+        return () => clearInterval(interval);
+    }, [user]);
     
     const animationClass = isMounted
         ? 'opacity-100 translate-y-0'
@@ -86,6 +109,12 @@ const Navbar = () => {
                             <Package size={16} />
                             My Trips
                         </Button>
+                        {credits !== null && (
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                <Ticket className="w-4 h-4" />
+                                <span>{credits}/5</span>
+                            </div>
+                        )}
                         <UserButton />
                     </div>
                 )}
@@ -145,6 +174,12 @@ const Navbar = () => {
                                 <Package size={16} />
                                 My Trips
                             </Button>
+                            {credits !== null && (
+                                <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                    <Ticket className="w-4 h-4" />
+                                    <span>{credits}/5 Credits</span>
+                                </div>
+                            )}
                             <UserButton />
                         </div>
                     )}

@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
+import connectDB from "@/lib/mongodb";
+import TripDetail from "@/lib/models/TripDetail";
 
 // Temporary mock responses for testing
 const mockResponses = [
@@ -342,10 +345,78 @@ async function createTripPlan(messages, isFinal = false) {
   }
 }
 
+// Function to count trips created today from MongoDB
+async function getTripsCreatedToday(clerkId) {
+  try {
+    await connectDB();
+    
+    // Get start and end of today in UTC
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    
+    const count = await TripDetail.countDocuments({
+      clerkId,
+      createdAt: {
+        $gte: startOfToday,
+        $lte: endOfToday
+      }
+    });
+    
+    console.log(`MongoDB: User ${clerkId} has created ${count} trips today (${startOfToday.toISOString()} to ${endOfToday.toISOString()})`);
+    return count;
+  } catch (error) {
+    console.error("Error counting trips from MongoDB:", error);
+    return 0;
+  }
+}
+
 // API Route Handler
 export async function POST(req) {
   try {
-    const { messages, userSelection ,isFinal} = await req.json();
+    const { messages, userSelection, isFinal } = await req.json();
+    const user = await currentUser();
+    
+    // MongoDB-only credit verification - 5 trips per day (resets at midnight)
+    const userId = user?.primaryEmailAddress?.emailAddress ?? user?.id ?? 'anonymous';
+    const clerkId = user?.id;
+    
+    if (!clerkId) {
+      return NextResponse.json(
+        { success: false, error: "User not authenticated" },
+        { status: 401 }
+      );
+    }
+    
+    // Check MongoDB for actual trip count today
+    const tripsCreatedToday = await getTripsCreatedToday(clerkId);
+    const remainingCredits = 5 - tripsCreatedToday;
+    
+    console.log("===== CREDIT VERIFICATION (MongoDB Only) =====");
+    console.log(`User: ${userId}`);
+    console.log(`Clerk ID: ${clerkId}`);
+    console.log(`Trips created today: ${tripsCreatedToday}/5`);
+    console.log(`Remaining credits: ${remainingCredits}`);
+    console.log(`Is final trip generation: ${isFinal}`);
+    
+    // Check if user has reached daily limit (5 trips per day)
+    if (tripsCreatedToday >= 5) {
+      console.log("❌ BLOCKED: User has already created 5 trips today");
+      console.log("Credits will reset at midnight (12:00 AM)");
+      console.log("============================================");
+      return NextResponse.json(
+        createApiResponse(
+          "Sorry, you've used all your 5 free trip plans for today! 🎫 Your credits will refill tomorrow at midnight, or upgrade your plan for unlimited trips.",
+          "limit"
+        ),
+        { status: 200 }
+      );
+    }
+    
+    console.log(`✅ ALLOWED: User can proceed (${remainingCredits} credits remaining)`);
+    console.log("============================================");
     
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
