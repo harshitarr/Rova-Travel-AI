@@ -24,7 +24,11 @@ const HotelCardItem = ({ hotel }) => {
         <div>
             <div className="flex flex-col gap-3">
                 <div className="overflow-hidden rounded-xl shadow">
-                    <Image src={hotel?.hotel_image_url || '/placeholder.jpg'} alt={hotel?.hotel_name} width={800} height={240} className="w-full h-40 object-cover" />
+                    {hotel?.hotel_image_url && hotel.hotel_image_url.startsWith('http') ? (
+                        <img src={hotel.hotel_image_url} alt={hotel?.hotel_name} className="w-full h-40 object-cover" loading="lazy" />
+                    ) : (
+                        <Image src={hotel?.hotel_image_url || '/placeholder.jpg'} alt={hotel?.hotel_name} width={800} height={240} className="w-full h-40 object-cover" />
+                    )}
                 </div>
                 <h2 className="font-semibold text-lg">{hotel?.hotel_name}</h2>
                 <h3 className="text-gray-500 text-xs line-clamp-2">{hotel?.hotel_address}</h3>

@@ -9,11 +9,13 @@ const TravelInterest = ({onSelectedOption}) => {
       // Double click detected
       clearTimeout(clickTimeoutRef.current);
       clickTimeoutRef.current = null;
-      onSelectedOption(item.title + " : " + item.desc, true); // true for double tap
+      // Only pass the interest title (not the description)
+      onSelectedOption(item.title, true); // true for double tap
     } else {
       // Single click - wait to see if there's a second click
       clickTimeoutRef.current = setTimeout(() => {
-        onSelectedOption(item.title + " : " + item.desc, false); // false for single tap
+        // Only pass the interest title (not the description)
+        onSelectedOption(item.title, false); // false for single tap
         clickTimeoutRef.current = null;
       }, 300); // 300ms delay to detect double click
     }

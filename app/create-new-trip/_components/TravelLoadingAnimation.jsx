@@ -38,12 +38,12 @@ const TravelLoadingAnimation = ({ isGenerating = true, onViewTrip }) => {
       <p className="text-sm text-gray-600 mb-6 text-center">Your personalized travel itinerary is ready</p>
       
       {/* View Trip Button */}
-      <button 
+      {/* <button 
         onClick={onViewTrip}
         className="bg-gradient-to-r from-[#F472B6] to-[#EC4899] hover:from-[#EC4899] hover:to-[#DB2777] text-white px-8 py-3 rounded-full font-medium transition-all duration-200 transform hover:scale-105 shadow-lg"
       >
         View Trip
-      </button>
+      </button> */}
     </div>
   );
 };

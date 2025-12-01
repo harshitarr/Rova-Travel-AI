@@ -10,7 +10,11 @@ function PlaceCardItem({ activity, index }) {
     <div>
       <div className="flex flex-col gap-2">
         <div className="overflow-hidden rounded-xl shadow relative">
-          <Image src={activity?.place_image_url || '/placeholder.jpg'} alt={activity?.place_name} width={800} height={240} className="w-full h-40 object-cover rounded-xl" />
+          {activity?.place_image_url && activity.place_image_url.startsWith('http') ? (
+            <img src={activity.place_image_url} alt={activity?.place_name} className="w-full h-40 object-cover rounded-xl" loading="lazy" />
+          ) : (
+            <Image src={activity?.place_image_url || '/placeholder.jpg'} alt={activity?.place_name} width={800} height={240} className="w-full h-40 object-cover rounded-xl" />
+          )}
         </div>
         <h2 className="font-semibold text-lg">{activity?.place_name}</h2>
         <p className="text-xs text-gray-500 line-clamp-2">{activity?.place_details || activity?.place_address}</p>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useUserDetail } from "@/app/provider";
+import { useTripDetail, useUserDetail } from "@/app/provider";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -23,6 +23,7 @@ const ChatBox = () => {
   const [isFinal,setIsFinal]=useState(false);
   const [tripCompleted, setTripCompleted] = useState(false);
   const { user } = useUser();
+  const {tripDetailInfo,setTripDetailInfo}=useTripDetail();
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -36,9 +37,7 @@ const ChatBox = () => {
     }
   }, [messages, isLoading]);
 
-  // -----------------------------
   // STABLE onSend function
-  // -----------------------------
   const onSend = useCallback(async () => {
     if (!userInput?.trim() || isLoading) return;
 
@@ -55,38 +54,62 @@ const ChatBox = () => {
     try {
       // Detect user selection patterns and send appropriate userSelection
       let userSelection = null;
-      
-      // Check for initial trip creation prompts
-      if (currentUserInput.includes("create new trip") || currentUserInput.includes("new trip") ||
-          currentUserInput.includes("plan a trip") || currentUserInput.includes("trip planning") ||
-          currentUserInput.includes("inspire me where to go") || currentUserInput.includes("adventure destinations") ||
-          currentUserInput.includes("discover historical gems") || currentUserInput.includes("historical gems")) {
-        // Don't set userSelection for initial prompts - let API handle the conversation start
-        userSelection = null;
-      }
-      // Check for budget patterns
-      else if (currentUserInput.includes("budget") || currentUserInput.includes("cheap") || 
-          currentUserInput.includes("luxury") || currentUserInput.includes("moderate") ||
-          currentUserInput.includes("mid-range") || currentUserInput.includes("average")) {
-        userSelection = { budget: userInput };
-      }
-      // Check for group size patterns
-      else if (currentUserInput.includes("couple") || currentUserInput.includes("solo") || 
-               currentUserInput.includes("family") || currentUserInput.includes("friends") ||
-               currentUserInput.includes("people") || currentUserInput.includes("person")) {
-        userSelection = { groupsize: userInput };
-      }
-      // Check for duration patterns
-      else if (currentUserInput.includes("day") || currentUserInput.includes("week") || 
-               /\d+\s*(day|days|week|weeks)/.test(currentUserInput)) {
-        userSelection = { duration: userInput };
-      }
-      // Check for interest patterns
-      else if (currentUserInput.includes("adventure") || currentUserInput.includes("culture") || 
-               currentUserInput.includes("food") || currentUserInput.includes("relaxation") ||
-               currentUserInput.includes("beach") || currentUserInput.includes("nightlife") ||
-               currentUserInput.includes("sightseeing") || currentUserInput.includes("shopping")) {
-        userSelection = { interests: userInput };
+
+      // First try to parse explicit trip params like "from X to Y for N days"
+      const fromToMatch = userInput.match(/from\s+(.+?)\s+to\s+(.+?)(?:\s+for|\s*$)/i);
+      const durationMatch = userInput.match(/(\d+)\s*(day|days|week|weeks)/i);
+      const parsedOrigin = fromToMatch ? fromToMatch[1].trim() : null;
+      const parsedDestination = fromToMatch ? fromToMatch[2].trim() : null;
+      const parsedDuration = durationMatch ? `${durationMatch[1]} ${durationMatch[2]}` : null;
+
+      // If we have some parsed trip info, determine which additional fields are missing
+      if (parsedOrigin || parsedDestination || parsedDuration) {
+        const existing = (tripDetailInfo && tripDetailInfo.trip_plan) ? tripDetailInfo.trip_plan : {};
+        const missing = [];
+        if (!existing.budget) missing.push('budget');
+        if (!existing.groupSize) missing.push('groupsize');
+        if (!existing.interests) missing.push('interests');
+
+        userSelection = {
+          origin: parsedOrigin || undefined,
+          destination: parsedDestination || undefined,
+          duration: parsedDuration || undefined,
+          missing,
+        };
+      } else {
+        // Fallback pattern checks
+        // Check for initial trip creation prompts
+        if (currentUserInput.includes("create new trip") || currentUserInput.includes("new trip") ||
+            currentUserInput.includes("plan a trip") || currentUserInput.includes("trip planning") ||
+            currentUserInput.includes("inspire me where to go") || currentUserInput.includes("adventure destinations") ||
+            currentUserInput.includes("discover historical gems") || currentUserInput.includes("historical gems")) {
+          // Don't set userSelection for initial prompts - let API handle the conversation start
+          userSelection = null;
+        }
+        // Check for budget patterns
+        else if (currentUserInput.includes("budget") || currentUserInput.includes("cheap") || 
+            currentUserInput.includes("luxury") || currentUserInput.includes("moderate") ||
+            currentUserInput.includes("mid-range") || currentUserInput.includes("average")) {
+          userSelection = { budget: userInput };
+        }
+        // Check for group size patterns
+        else if (currentUserInput.includes("couple") || currentUserInput.includes("solo") || 
+                 currentUserInput.includes("family") || currentUserInput.includes("friends") ||
+                 currentUserInput.includes("people") || currentUserInput.includes("person")) {
+          userSelection = { groupsize: userInput };
+        }
+        // Check for duration patterns
+        else if (currentUserInput.includes("day") || currentUserInput.includes("week") || 
+                 /\d+\s*(day|days|week|weeks)/.test(currentUserInput)) {
+          userSelection = { duration: userInput };
+        }
+        // Check for interest patterns
+        else if (currentUserInput.includes("adventure") || currentUserInput.includes("culture") || 
+                 currentUserInput.includes("food") || currentUserInput.includes("relaxation") ||
+                 currentUserInput.includes("beach") || currentUserInput.includes("nightlife") ||
+                 currentUserInput.includes("sightseeing") || currentUserInput.includes("shopping")) {
+          userSelection = { interests: userInput };
+        }
       }
 
       // Use ref to get current messages without dependency
@@ -128,9 +151,7 @@ const ChatBox = () => {
     }
   }, [userInput, isLoading]);
 
-  // -----------------------------
   // STABLE handlers for UI components
-  // -----------------------------
   const handleBudgetSelect = useCallback((budget, isDoubleTap = false) => {
     console.log("Budget Selected:", budget, "Double tap:", isDoubleTap);
     
@@ -330,9 +351,7 @@ const ChatBox = () => {
   );
 
   const handleViewTrip = useCallback(() => {
-    // Handle view trip action - could navigate to trip details page
     console.log("View Trip clicked - navigate to trip details");
-    // You can add navigation logic here
   }, []);
 
   // -----------------------------
@@ -377,11 +396,63 @@ const ChatBox = () => {
 
           if (result.data.success) {
             // Don't set ui: "final" again to prevent infinite loop
+            // Try to parse the response and avoid showing raw JSON in the chat
+            const respText = result.data.resp || result.data.message || "Your trip plan is ready!";
+            let displayMessage = respText;
+            try {
+              let parsed = null;
+              try {
+                parsed = JSON.parse(respText);
+              } catch (e) {
+                const start = respText.indexOf('{');
+                const end = respText.lastIndexOf('}');
+                if (start !== -1 && end !== -1 && end > start) {
+                  const jsonSubstring = respText.slice(start, end + 1);
+                  try {
+                    parsed = JSON.parse(jsonSubstring);
+                  } catch (e2) {
+                    // leave parsed as null
+                  }
+                }
+              }
+
+              const tripPlanObj = parsed && (parsed.trip_plan || parsed.trip_plan === undefined ? parsed.trip_plan : parsed) || null;
+              if (tripPlanObj) {
+                // Build a pleasant multi-line summary: destination, duration, top hotels, and per-day bullets
+                const dest = tripPlanObj.destination || tripPlanObj.title || '';
+                const dur = tripPlanObj.duration || '';
+                const hotels = Array.isArray(tripPlanObj.hotels) ? tripPlanObj.hotels : [];
+                const hotelNames = hotels.slice(0, 3).map(h => h.hotel_name || h.name || '').filter(Boolean);
+
+                const itinerary = Array.isArray(tripPlanObj.itinerary) ? tripPlanObj.itinerary : [];
+                const dayLines = itinerary.map((d, i) => {
+                  const dayNum = d.day ?? (i + 1);
+                  const short = d.day_plan || (d.activities && d.activities[0] && (d.activities[0].place_name || d.activities[0].place_details)) || '';
+                  const shortTrim = short ? (short.length > 120 ? short.slice(0, 117) + '...' : short) : '';
+                  return `Day ${dayNum}: ${shortTrim}`;
+                });
+
+                const hotelLine = hotelNames.length ? `Top hotels: ${hotelNames.join(', ')}` : '';
+                const daysText = dayLines.length ? dayLines.join('\n') : '';
+
+                const lines = [];
+                lines.push(`Your trip plan to ${dest}${dur ? ` (${dur})` : ''} is ready.`);
+                if (hotelLine) lines.push(hotelLine);
+                if (daysText) lines.push('\nItinerary:\n' + daysText);
+                lines.push('\nHave a nice trip — see you on the next one!');
+
+                displayMessage = lines.join('\n\n');
+              }
+            } catch (e) {
+              // fallback to raw response if parsing fails
+              displayMessage = respText;
+            }
+
             setMessages((prev) => [
               ...prev,
               {
                 role: "assistant",
-                content: result.data.resp || result.data.message || "Your trip plan is ready!",
+                content: displayMessage,
               },
             ]);
             // Mark trip as completed
@@ -429,6 +500,11 @@ const ChatBox = () => {
                   try {
                     const saveResp = await axios.post('/api/tripdetails', savePayload);
                     console.log('Save response:', saveResp.data);
+                    const saved = saveResp?.data?.trip || saveResp?.data || null;
+                    if (saved && typeof setTripDetailInfo === 'function') {
+                      setTripDetailInfo(saved);
+                      console.log('Trip saved to TripDetail context:', saved);
+                    }
                   } catch (saveErr) {
                     console.error('Error saving trip to backend:', saveErr.response?.data || saveErr.message || saveErr);
                   }
@@ -448,11 +524,9 @@ const ChatBox = () => {
       }, 1000);
     }
   }, [messages, isFinal, isLoading]);
-  // -----------------------------
   // MAIN RENDER
-  // -----------------------------
   return (
-    <div className="h-[85vh] flex flex-col">
+    <div className="h-[85vh] lg:w-[550px] w-full lg:min-w-[550px] flex-shrink-0 flex flex-col border rounded-2xl p-5">
       {messages?.length === 0 && (
         <EmptyBoxState onSelectOption={handleEmptySelect} />
       )}
@@ -469,13 +543,13 @@ const ChatBox = () => {
             }`}
           >
             <div
-              className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
+              className={`max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
                 message.role === "user"
                   ? "bg-[#F472B6] text-white rounded-br-md"
                   : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"
               }`}
             >
-              <p className="text-sm leading-relaxed">{message.content}</p>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
 
               {/* UI Components - Only render for assistant messages with valid UI */}
               {message.role === "assistant" && message.ui && 
@@ -491,7 +565,7 @@ const ChatBox = () => {
         {/* Typing Indicator */}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="max-w-[70%] px-4 py-3 rounded-2xl rounded-bl-md bg-white border border-gray-200 shadow-sm">
+            <div className="max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl rounded-bl-md bg-white border border-gray-200 shadow-sm">
               <div className="flex items-center space-x-2">
                 <span className="text-gray-500 text-sm">typing</span>
                 <div className="flex space-x-1">
@@ -513,7 +587,7 @@ const ChatBox = () => {
 
       {/* USER INPUT */}
       <section className="p-4 bg-white border-t border-gray-200">
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-full mx-auto">
           <div className="flex items-end gap-3 bg-gray-50 rounded-3xl px-4 py-3 border border-gray-300">
             <Textarea
               placeholder="Message Rova AI..."

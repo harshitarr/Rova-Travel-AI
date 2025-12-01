@@ -5,18 +5,23 @@ import Navbar from "./_components/Navbar";
 import Footer from "./_components/Footer";
 import { useUser } from "@clerk/nextjs";
 import { UserDetailContext } from "../context/UserDetailContext";
+import { TripDetailContext } from "@/context/TripDetailContext";
 
 
 
 const Provider = ({ children }) => {
   const { user } = useUser();
   const [userDetail, setUserDetail] = useState(null);
+  const [tripDetailInfo, setTripDetailInfo] = useState(null);
 
 
   useEffect(() => {
     if (user) {
+      const email = user?.primaryEmailAddress?.emailAddress || user?.email;
+      if (!email) return;
+
       createNewUser({
-        email: user?.primaryEmailAddress?.emailAddress,
+        email,
         imageUrl: user?.imageUrl,
         name: user?.fullName ?? user?.firstName ?? "",
       });
@@ -55,11 +60,13 @@ const Provider = ({ children }) => {
 
   return (
     <UserDetailContext.Provider value={{userDetail,setUserDetail}}>
+      <TripDetailContext.Provider value={{tripDetailInfo,setTripDetailInfo}}>
     <div>
       <Navbar />
       {children}
       <Footer />
     </div>
+    </TripDetailContext.Provider>
     </UserDetailContext.Provider>
   );
 };
@@ -68,4 +75,9 @@ export default Provider;
 
 export const useUserDetail = () => {
   return useContext(UserDetailContext);
+}
+
+
+export const useTripDetail = ()=>{
+  return useContext(TripDetailContext);
 }
