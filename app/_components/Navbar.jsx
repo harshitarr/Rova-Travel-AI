@@ -9,6 +9,7 @@ import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import { Package, Sparkles, Ticket } from 'lucide-react';
 
 
+
 const Navbar = () => {
     
     const [isMounted, setIsMounted] = useState(false);
@@ -70,7 +71,7 @@ const Navbar = () => {
                         const isActive = currentPath === menu.path;
                         return (
                             <Link href={menu.path} key={index} className='group'>
-                                <div className={`relative transition-all duration-300 ${isActive ? 'text-[#F472B6] font-semibold' : 'text-gray-500 hover:text-rose-500'}`}>
+                                <div className={`relative transition-all duration-300 ${isActive ? 'text-[#F472B6] font-semibold' : 'text-gray-500 hover:text-pink-500'}`}>
                                     <h2 className='text-lg cursor-pointer transform transition-transform duration-300 hover:scale-105'>
                                         {menu.name}
                                     </h2>
@@ -87,7 +88,7 @@ const Navbar = () => {
                 {/* Desktop Get Started Button / User Button */}
                 {!user ? (
                     <SignInButton>
-                        <Button className='hidden md:block bg-[#F472B6] hover:bg-pink-500 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
+                        <Button className='hidden md:block bg-[#F472B6] hover:bg-pink-400 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
                             Get Started
                         </Button>
                     </SignInButton>
