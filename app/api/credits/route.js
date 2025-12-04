@@ -1,4 +1,4 @@
-import { currentUser, auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import TripDetail from "@/lib/models/TripDetail";
@@ -52,22 +52,7 @@ export async function GET(req) {
       );
     }
     
-    // Check if user has premium subscription
-    const { has } = await auth();
-    const hasPremiumAccess = has({ plan: 'monthy' });
-    
-    if (hasPremiumAccess) {
-      // Premium user - unlimited trips
-      console.log(`Credits API: User ${clerkId} has PREMIUM access - unlimited trips`);
-      return NextResponse.json({
-        success: true,
-        isPremium: true,
-        remaining: -1, // -1 indicates unlimited
-        total: -1,
-      });
-    }
-    
-    // Free user - check MongoDB for actual trip count today
+    // Check MongoDB for actual trip count today
     const tripsCreatedToday = await getTripsCreatedToday(clerkId);
     const remaining = Math.max(0, 5 - tripsCreatedToday);
     
@@ -78,7 +63,6 @@ export async function GET(req) {
 
     return NextResponse.json({
       success: true,
-      isPremium: false,
       remaining: remaining,
       total: 5,
       tripsToday: tripsCreatedToday,
