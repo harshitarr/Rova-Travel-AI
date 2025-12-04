@@ -5,19 +5,11 @@ import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import TripDetail from '@/lib/models/TripDetail';
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
-// Add GET handler to verify endpoint exists
-export async function GET() {
-  return NextResponse.json({ status: 'Webhook endpoint is active' }, { status: 200 });
-}
-
 export async function POST(req) {
   console.log('🔔 Webhook POST received');
   
   // Get the headers
-  const headerPayload = await headers();
+  const headerPayload = headers();
   const svix_id = headerPayload.get("svix-id");
   const svix_timestamp = headerPayload.get("svix-timestamp");
   const svix_signature = headerPayload.get("svix-signature");
