@@ -8,6 +8,11 @@ import TripDetail from '@/lib/models/TripDetail';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+// Add GET handler to verify endpoint exists
+export async function GET() {
+  return NextResponse.json({ status: 'Webhook endpoint is active' }, { status: 200 });
+}
+
 export async function POST(req) {
   console.log('🔔 Webhook POST received');
   

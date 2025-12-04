@@ -4,11 +4,11 @@ import { createNewUser } from '@/lib/models/User';
 
 export async function POST(request) {
   try {
-    const { email, name, imageUrl, clerkId } = await request.json();
+    const { email, name, imageUrl } = await request.json();
 
-    if (!email || !name || !clerkId) {
+    if (!email || !name) {
       return NextResponse.json(
-        { error: 'Missing required fields (email, name, clerkId)' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -19,8 +19,7 @@ export async function POST(request) {
     const user = await createNewUser({
       name,
       email,
-      imageUrl: imageUrl || '',
-      clerkId
+      imageUrl: imageUrl || ''
     });
 
     return NextResponse.json({
