@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
-import { Package, Sparkles, Ticket } from 'lucide-react';
+import { Package, Sparkles, Ticket, Crown } from 'lucide-react';
 
 
 
@@ -14,6 +14,7 @@ const Navbar = () => {
     
     const [isMounted, setIsMounted] = useState(false);
     const [credits, setCredits] = useState(null);
+    const [isPremium, setIsPremium] = useState(false);
     const { user } = useUser();
     const currentPath = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,7 +35,10 @@ const Navbar = () => {
                     const data = await response.json();
                     console.log('Navbar credits fetch:', data);
                     if (data.success) {
-                        setCredits(data.remaining);
+                        setIsPremium(data.isPremium || false);
+                        if (!data.isPremium) {
+                            setCredits(data.remaining);
+                        }
                     }
                 } catch (error) {
                     console.error('Error fetching credits:', error);
@@ -110,11 +114,18 @@ const Navbar = () => {
                             <Package size={16} />
                             My Trips
                         </Button>
-                        {credits !== null && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
-                                <Ticket className="w-4 h-4" />
-                                <span>{credits}/5</span>
+                        {isPremium ? (
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md  border border-yellow-600 text-sm font-semibold text-yellow-600 shadow-md">
+                                <Crown className="w-4 h-4" />
+                                <span>Premium</span>
                             </div>
+                        ) : (
+                            credits !== null && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                    <Ticket className="w-4 h-4" />
+                                    <span>{credits}/5</span>
+                                </div>
+                            )
                         )}
                         <UserButton />
                     </div>
@@ -175,11 +186,18 @@ const Navbar = () => {
                                 <Package size={16} />
                                 My Trips
                             </Button>
-                            {credits !== null && (
-                                <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
-                                    <Ticket className="w-4 h-4" />
-                                    <span>{credits}/5 Credits</span>
+                            {isPremium ? (
+                                <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-gradient-to-r from-yellow-400 to-amber-500 border border-yellow-600 text-sm font-semibold text-white shadow-md">
+                                    <Crown className="w-5 h-5" />
+                                    <span>Premium Member</span>
                                 </div>
+                            ) : (
+                                credits !== null && (
+                                    <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                        <Ticket className="w-4 h-4" />
+                                        <span>{credits}/5 Credits</span>
+                                    </div>
+                                )
                             )}
                             <UserButton />
                         </div>
