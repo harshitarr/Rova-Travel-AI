@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
-import TripDetail, { createTripDetail } from '@/lib/models/TripDetail';
+import User from '@/lib/models/User';
+import mongoose from 'mongoose';
 
 export async function POST(request) {
   try {
@@ -11,26 +12,49 @@ export async function POST(request) {
     }
 
     await connectToDatabase();
-    // Ensure indexes exist (helps catch unique constraint issues early)
-    try {
-      await TripDetail.createIndexes();
-      console.log('tripdetails POST: ensured indexes');
-    } catch (idxErr) {
-      console.warn('tripdetails POST: createIndexes error', idxErr && idxErr.message);
+
+    // Find the user
+    const user = await User.findOne({ clerkId: payload.clerkId });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    console.log('tripdetails POST payload:', JSON.stringify(payload).slice(0, 2000));
+    // Generate tripId if not provided
+    const tripId = payload.tripId || new mongoose.Types.ObjectId().toString();
 
-    const trip = await createTripDetail(payload);
+    // Normalize interests to array
+    let interests = payload.interests || [];
+    if (typeof interests === 'string') {
+      interests = interests.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    // Create trip object
+    const trip = {
+      tripId,
+      title: payload.title || '',
+      destination: payload.destination || '',
+      startDate: payload.startDate ? new Date(payload.startDate) : undefined,
+      endDate: payload.endDate ? new Date(payload.endDate) : undefined,
+      budget: payload.budget || '',
+      groupSize: payload.groupSize || '',
+      interests,
+      trip_plan: payload.trip_plan || {},
+      itinerary: payload.itinerary || [],
+      notes: payload.notes || '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add trip to user's trips array
+    user.trips.push(trip);
+    await user.save(); // This will trigger the pre-save middleware to update numberOfTrips
+
+    console.log(`Trip ${tripId} added to user ${payload.clerkId}. Total trips: ${user.numberOfTrips}`);
 
     return NextResponse.json({ message: 'Trip created', trip }, { status: 201 });
   } catch (error) {
     console.error('Error creating trip detail:', error);
     console.error(error && error.stack);
-
-    if (error.code === 11000) {
-      return NextResponse.json({ error: 'Trip with this tripId already exists for this user' }, { status: 409 });
-    }
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -47,19 +71,24 @@ export async function GET(request) {
     }
 
     await connectToDatabase();
-    try {
-      await TripDetail.createIndexes();
-      console.log('tripdetails GET: ensured indexes');
-    } catch (idxErr) {
-      console.warn('tripdetails GET: createIndexes error', idxErr && idxErr.message);
+
+    // Find user and get their trips
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) {
+      return NextResponse.json({ trips: [] }, { status: 200 });
     }
 
-    console.log('tripdetails GET query params:', { clerkId, tripId });
+    let trips = user.trips || [];
 
-    const query = { clerkId };
-    if (tripId) query.tripId = tripId;
+    // Filter by tripId if provided
+    if (tripId) {
+      trips = trips.filter(trip => trip.tripId === tripId);
+    }
 
-    const trips = await TripDetail.find(query).sort({ createdAt: -1 }).lean();
+    // Sort by createdAt descending (newest first)
+    trips.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    console.log(`Retrieved ${trips.length} trips for user ${clerkId}`);
 
     return NextResponse.json({ trips }, { status: 200 });
   } catch (error) {

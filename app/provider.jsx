@@ -24,14 +24,15 @@ const Provider = ({ children }) => {
         email,
         imageUrl: user?.imageUrl,
         name: user?.fullName ?? user?.firstName ?? "",
+        clerkId: user?.id,
       });
     }
   }, [user]);
 
 
-  async function createNewUser({ email, imageUrl, name }) {
+  async function createNewUser({ email, imageUrl, name, clerkId }) {
     try {
-      console.log("Creating user in MongoDB", { email, imageUrl, name });
+      console.log("Creating user in MongoDB", { email, imageUrl, name, clerkId });
       
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -42,6 +43,7 @@ const Provider = ({ children }) => {
           email,
           name,
           imageUrl,
+          clerkId,
         }),
       });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import connectDB from "@/lib/mongodb";
-import TripDetail from "@/lib/models/TripDetail";
+import User from "@/lib/models/User";
 
 // Temporary mock responses for testing
 const mockResponses = [
@@ -357,13 +357,16 @@ async function getTripsCreatedToday(clerkId) {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
     
-    const count = await TripDetail.countDocuments({
-      clerkId,
-      createdAt: {
-        $gte: startOfToday,
-        $lte: endOfToday
-      }
-    });
+    // Find user and count trips created today from their trips array
+    const user = await User.findOne({ clerkId });
+    if (!user || !user.trips) {
+      return 0;
+    }
+    
+    const count = user.trips.filter(trip => {
+      const tripDate = new Date(trip.createdAt);
+      return tripDate >= startOfToday && tripDate <= endOfToday;
+    }).length;
     
     console.log(`MongoDB: User ${clerkId} has created ${count} trips today (${startOfToday.toISOString()} to ${endOfToday.toISOString()})`);
     return count;
