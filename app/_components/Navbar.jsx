@@ -103,13 +103,14 @@ const Navbar = () => {
                            Generate Plan
                         </Button>
                         </Link>
+                        <Link href="/my-trips">
                         <Button 
                             className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
-                            onClick={() => console.log('My Trips clicked')}
                         >
                             <Package size={16} />
                             My Trips
                         </Button>
+                        </Link>
                         {credits !== null && (
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
                                 <Ticket className="w-4 h-4" />
@@ -168,13 +169,14 @@ const Navbar = () => {
                                 Generate Plan
                             </Button>
                             </Link>
+                            <Link href="/my-trips" className="w-full">
                             <Button 
                                 className='w-full bg-[#F472B6] hover:bg-pink-500 text-white flex items-center justify-center gap-2 cursor-pointer'
-                                onClick={() => console.log('My Trips clicked')}
                             >
                                 <Package size={16} />
                                 My Trips
                             </Button>
+                            </Link>
                             {credits !== null && (
                                 <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
                                     <Ticket className="w-4 h-4" />

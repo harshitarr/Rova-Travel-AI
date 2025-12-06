@@ -96,3 +96,57 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const payload = await request.json();
+    const { clerkId, tripId } = payload;
+
+    if (!clerkId || !tripId) {
+      return NextResponse.json({ error: 'Missing required fields: clerkId and tripId' }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    // Find user and remove the trip from their trips array
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Find the trip to check creation date
+    const tripToDelete = user.trips.find(trip => trip.tripId === tripId);
+    if (!tripToDelete) {
+      return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+    }
+
+    // Check if trip was created today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tripCreatedDate = new Date(tripToDelete.createdAt);
+    tripCreatedDate.setHours(0, 0, 0, 0);
+
+    if (tripCreatedDate.getTime() === today.getTime()) {
+      return NextResponse.json({ 
+        error: 'Cannot delete trips created today. Please wait until tomorrow to prevent credit point malpractice.' 
+      }, { status: 403 });
+    }
+
+    // Filter out the trip to delete
+    const initialLength = user.trips.length;
+    user.trips = user.trips.filter(trip => trip.tripId !== tripId);
+
+    if (user.trips.length === initialLength) {
+      return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
+    }
+
+    await user.save(); // This will trigger the pre-save middleware to update numberOfTrips
+
+    console.log(`Trip ${tripId} deleted from user ${clerkId}. Remaining trips: ${user.numberOfTrips}`);
+
+    return NextResponse.json({ message: 'Trip deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting trip:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
