@@ -64,8 +64,8 @@ const Navbar = () => {
                     <h2 className="text-2xl font-extrabold tracking-tight text-gray-800">Rova AI</h2>
                 </Link>
 
-                {/* Desktop Menu Options */}
-                <div className='hidden md:flex gap-8 items-center'>
+                {/* Desktop Menu Options - Centered */}
+                <div className='hidden md:flex gap-8 items-center absolute left-1/2 transform -translate-x-1/2'>
                     {menuOptions.map((menu, index) => {
                         // Check if the current path matches the menu item's path
                         const isActive = currentPath === menu.path;
