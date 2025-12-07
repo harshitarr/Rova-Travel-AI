@@ -169,8 +169,40 @@ const MyTripsPage = () => {
 
 // Trip Card Component
 const TripCard = ({ trip, index, onView, onDelete }) => {
-  const getPlaceholderImage = (destination) => {
-    return `https://source.unsplash.com/800x600/?${encodeURIComponent(destination || 'travel')},landscape`;
+  const getDynamicImage = (destination) => {
+    // Map common destinations to specific beautiful images
+    const destinationImages = {
+      // India
+      'coimbatore': 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop&q=80',
+      'chennai': 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop&q=80',
+      'mumbai': 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&h=600&fit=crop&q=80',
+      'delhi': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&h=600&fit=crop&q=80',
+      'bangalore': 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&h=600&fit=crop&q=80',
+      'goa': 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&q=80',
+      'jaipur': 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&h=600&fit=crop&q=80',
+      'kerala': 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&h=600&fit=crop&q=80',
+      // International
+      'paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=600&fit=crop&q=80',
+      'london': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=600&fit=crop&q=80',
+      'new york': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=600&fit=crop&q=80',
+      'tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop&q=80',
+      'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&q=80',
+      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&h=600&fit=crop&q=80',
+      'bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=600&fit=crop&q=80',
+      'maldives': 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&h=600&fit=crop&q=80',
+    };
+
+    const destinationLower = destination?.toLowerCase() || '';
+    
+    // Check if we have a specific image for this destination
+    for (const [key, imageUrl] of Object.entries(destinationImages)) {
+      if (destinationLower.includes(key)) {
+        return imageUrl;
+      }
+    }
+    
+    // Fallback to generic travel images
+    return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&q=80';
   };
 
   // Check if trip was created today
@@ -192,11 +224,11 @@ const TripCard = ({ trip, index, onView, onDelete }) => {
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-pink-200 to-purple-200">
         <img
-          src={getPlaceholderImage(trip.destination)}
+          src={getDynamicImage(trip.destination)}
           alt={trip.destination || 'Trip'}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop';
+            e.target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&q=80';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -223,33 +255,24 @@ const TripCard = ({ trip, index, onView, onDelete }) => {
         <div className="flex gap-2">
           <Button
             onClick={onView}
-            className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white transition-all duration-300 transform hover:scale-105 active:scale-95"
+            className="flex-1 bg-[#F472B6] hover:bg-pink-500 text-white transition-all duration-300 transform hover:scale-105 active:scale-95"
           >
             <Eye className="w-4 h-4 mr-2" />
             View
           </Button>
-          <div className="relative group">
-            <Button
-              onClick={onDelete}
-              disabled={cannotDelete}
-              variant="outline"
-              className={`border-2 transition-all duration-300 ${
-                cannotDelete 
-                  ? 'border-gray-300 text-gray-400 cursor-not-allowed opacity-50' 
-                  : 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 transform hover:scale-105 active:scale-95'
-              }`}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-            {cannotDelete && (
-              <div className="absolute bottom-full mb-2 right-0 hidden group-hover:block z-10">
-                <div className="bg-gray-900 text-white text-xs rounded px-3 py-2 whitespace-nowrap">
-                  Cannot delete trips created today
-                  <div className="absolute top-full right-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            )}
-          </div>
+          <Button
+            onClick={onDelete}
+            disabled={cannotDelete}
+            className={`flex-1 transition-all duration-300 ${
+              cannotDelete 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50' 
+                : 'bg-red-500 hover:bg-red-600 text-white transform hover:scale-105 active:scale-95'
+            }`}
+            title={cannotDelete ? 'Cannot delete trips created today' : 'Delete trip'}
+          >
+            Delete
+            <Trash2 className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
     </div>

@@ -1,26 +1,10 @@
 "use client";
-import React, { useEffect } from 'react'
-import axios from 'axios'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, Plane } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 
 const HotelCardItem = ({ hotel }) => {
-
-    useEffect(() => {
-        if (hotel?.hotel_name) GetGooglePlaceDetail();
-    }, [hotel?.hotel_name]);
-
-    const GetGooglePlaceDetail = async () => {
-        try {
-            const result = await axios.post('/api/google-place-detail', { placeName: hotel?.hotel_name });
-            console.log('Google Place Detail:', result?.data);
-        } catch (err) {
-            console.error('GetGooglePlaceDetail error:', err);
-        }
-    }
-
     return (
         <div className="border-2 border-[#F472B6] rounded-xl p-4">
             <div className="flex flex-col gap-3">
@@ -51,11 +35,12 @@ const HotelCardItem = ({ hotel }) => {
                 {/* <p className="line-clamp-2 text-gray-500 text-xs">{hotel?.description}</p> */}
                 <Button asChild className='bg-[#F472B6] text-white hover:bg-pink-500 cursor-pointer'>
                     <Link 
-                        href={`https://www.openstreetmap.org/?mlat=${hotel?.geo_coordinates?.latitude}&mlon=${hotel?.geo_coordinates?.longitude}#map=15/${hotel?.geo_coordinates?.latitude}/${hotel?.geo_coordinates?.longitude}`} 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel?.hotel_name || '')}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                     >
-                        View on Map <ExternalLink />
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View
                     </Link>
                 </Button>
             </div>

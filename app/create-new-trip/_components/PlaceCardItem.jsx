@@ -33,11 +33,12 @@ function PlaceCardItem({ activity, index }) {
         <p className='flex gap-2 text-sm text-blue-400 line-clamp-1'><Timer/>Best Time : {activity?.best_time_to_visit}</p>
         <Button asChild className='bg-[#F472B6] text-white hover:bg-pink-500 cursor-pointer'>
           <Link 
-            href={`https://www.openstreetmap.org/?mlat=${activity?.geo_coordinates?.latitude}&mlon=${activity?.geo_coordinates?.longitude}#map=15/${activity?.geo_coordinates?.latitude}/${activity?.geo_coordinates?.longitude}`} 
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity?.place_name || '')}`} 
             target="_blank" 
             rel="noopener noreferrer"
           >
-            View on Map <ExternalLink />
+            <ExternalLink className="w-4 h-4 mr-2" />
+            View
           </Link>
         </Button>
 
