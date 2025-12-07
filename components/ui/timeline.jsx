@@ -31,22 +31,22 @@ export const Timeline = ({ data, tripData: TripInfo }) => {
         <h2 className="text-lg md:text-4xl mb-4 text-black dark:text-white max-w-4xl font-semibold [word-spacing:4px]">
           Your Trip Itinerary from <span className="text-[#F472B6]">{TripInfo?.trip_plan?.origin || TripInfo?.origin || "Origin"}</span> to <span className="text-[#F472B6]">{TripInfo?.trip_plan?.destination || TripInfo?.destination || "Destination"}</span> is Ready
         </h2>
-        <div className="flex gap-5 items-center py-4">
-          <div className="flex gap-2 items-center">
-            <Calendar/>
-            <h2>{TripInfo?.trip_plan?.duration || TripInfo?.duration || "Duration"}</h2>
+        <div className="flex flex-wrap gap-3 items-center py-4">
+          <div className="flex gap-2 items-center bg-pink-50 px-3 py-2 rounded-full border border-pink-200 hover:bg-pink-100 transition-colors">
+            <Calendar className="w-4 h-4 text-pink-500"/>
+            <h2 className="text-sm font-medium">{TripInfo?.trip_plan?.duration || TripInfo?.duration || "Duration"}</h2>
           </div>
-          <div className="flex gap-2 items-center">
-            <CircleDollarSign />
-            <h2>{TripInfo?.trip_plan?.budget || TripInfo?.budget || "Budget"}</h2>
+          <div className="flex gap-2 items-center bg-purple-50 px-3 py-2 rounded-full border border-purple-200 hover:bg-purple-100 transition-colors">
+            <CircleDollarSign className="w-4 h-4 text-purple-500"/>
+            <h2 className="text-sm font-medium">{TripInfo?.trip_plan?.budget || TripInfo?.budget || "Budget"}</h2>
           </div>
-          <div className="flex gap-2 items-center">
-            <Users />
-            <h2>{TripInfo?.trip_plan?.groupSize || TripInfo?.groupSize || "Group Size"}</h2>
+          <div className="flex gap-2 items-center bg-blue-50 px-3 py-2 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors">
+            <Users className="w-4 h-4 text-blue-500"/>
+            <h2 className="text-sm font-medium">{TripInfo?.trip_plan?.groupSize || TripInfo?.groupSize || "Group Size"}</h2>
           </div>
-          <div className="flex gap-2 items-center">
-            <Telescope />
-            <h2>{TripInfo?.trip_plan?.interests || TripInfo?.interests || "Interests"}</h2>
+          <div className="flex gap-2 items-center bg-orange-50 px-3 py-2 rounded-full border border-orange-200 hover:bg-orange-100 transition-colors">
+            <Telescope className="w-4 h-4 text-orange-500"/>
+            <h2 className="text-sm font-medium">{TripInfo?.trip_plan?.interests || TripInfo?.interests || "Interests"}</h2>
           </div>
         </div>
       </div>
