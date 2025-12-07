@@ -1,12 +1,15 @@
 "use client";
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, MapIcon, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Timeline } from '@/components/ui/timeline';
 import HotelCardItem from '@/app/create-new-trip/_components/HotelCardItem';
 import PlaceCardItem from '@/app/create-new-trip/_components/PlaceCardItem';
+import TripMap from './TripMap';
 
 const TripDetailsModal = ({ isOpen, onClose, trip }) => {
+  const [activeTab, setActiveTab] = useState('places');
+  
   if (!isOpen || !trip) return null;
 
   const tripPlan = trip.trip_plan || {};
@@ -72,15 +75,47 @@ const TripDetailsModal = ({ isOpen, onClose, trip }) => {
           >
             <X className="w-6 h-6" />
           </button>
+          
+          {/* Tabs */}
+          <div className="flex gap-3 pt-12">
+            <button
+              onClick={() => setActiveTab('places')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                activeTab === 'places'
+                  ? 'bg-white text-pink-500 shadow-lg'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              Places
+            </button>
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                activeTab === 'map'
+                  ? 'bg-white text-purple-500 shadow-lg'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <MapIcon className="w-4 h-4" />
+              Map
+            </button>
+          </div>
         </div>
 
-        {/* Timeline Content */}
-        <div className="overflow-y-auto max-h-[calc(95vh-80px)] custom-scrollbar bg-white">
-          {data.length > 1 ? (
-            <Timeline data={data} tripData={trip} />
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(95vh-140px)] custom-scrollbar bg-white">
+          {activeTab === 'places' ? (
+            data.length > 1 ? (
+              <Timeline data={data} tripData={trip} />
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No detailed itinerary available for this trip.</p>
+              </div>
+            )
           ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No detailed itinerary available for this trip.</p>
+            <div className="p-6">
+              <TripMap hotels={hotels} itinerary={itineraryDays} />
             </div>
           )}
         </div>

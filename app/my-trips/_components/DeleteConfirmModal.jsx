@@ -16,7 +16,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, tripName }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white p-6 relative">
+        <div className="bg-red-500 text-white p-6 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-all duration-300"
@@ -51,7 +51,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, tripName }) => {
           </Button>
           <Button
             onClick={onConfirm}
-            className="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-6"
+            className="bg-red-500 hover:bg-red-600 text-white px-6"
           >
             Delete
           </Button>

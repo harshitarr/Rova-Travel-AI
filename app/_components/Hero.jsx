@@ -1,6 +1,6 @@
 "use client"
 import { Textarea } from '@/components/ui/textarea'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Send, Globe2, Plane, Landmark, Sparkles, Map, Leaf, TrendingUp, Compass, ChevronRight, Zap } from 'lucide-react'
 import { suggestions, features } from './constants';
@@ -8,9 +8,47 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
 const Hero = () => {
+    const [typedText, setTypedText] = useState('');
+    const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [typingSpeed, setTypingSpeed] = useState(100);
 
     const {user} = useUser();
     const router=useRouter();
+
+    // Typing effect
+    useEffect(() => {
+        const suggestionTexts = suggestions.map(s => s.title);
+        const currentText = suggestionTexts[currentSuggestionIndex];
+
+        const handleTyping = () => {
+            if (!isDeleting) {
+                // Typing
+                if (typedText.length < currentText.length) {
+                    setTypedText(currentText.substring(0, typedText.length + 1));
+                    setTypingSpeed(60);
+                } else {
+                    // Pause before deleting
+                    setTimeout(() => setIsDeleting(true), 1500);
+                }
+            } else {
+                // Deleting
+                if (typedText.length > 0) {
+                    setTypedText(currentText.substring(0, typedText.length - 1));
+                    setTypingSpeed(30);
+                } else {
+                    // Move to next suggestion
+                    setIsDeleting(false);
+                    setCurrentSuggestionIndex((prev) => (prev + 1) % suggestionTexts.length);
+                    setTypingSpeed(300); // Pause before typing next
+                }
+            }
+        };
+
+        const timer = setTimeout(handleTyping, typingSpeed);
+        return () => clearTimeout(timer);
+    }, [typedText, isDeleting, currentSuggestionIndex, typingSpeed]);
+
     const onSend = () => {
         if(!user){
 
@@ -37,10 +75,12 @@ const Hero = () => {
                 {/* Input Box */}
                 <div className='w-full max-w-3xl mx-auto pt-4'>
                     <div className='border border-gray-200 rounded-2xl p-4 shadow-2xl relative bg-white transition-all duration-300 hover:shadow-rose-300/50'>
-                        <Textarea
-                            placeholder='Lets plan your trip! Where do you want to go?'
-                            className="w-full h-28 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none text-base md:text-lg p-3"
-                        />
+                        <div className="w-full h-28 flex items-start p-3">
+                            <span className="text-lg md:text-xl font-medium text-[#F472B6]">
+                                {typedText}
+                                <span className="inline-block w-0.5 h-6 bg-[#F472B6] ml-1 animate-pulse"></span>
+                            </span>
+                        </div>
                         <Button
                             size={'icon'}
                             className="bg-[#F472B6] hover:bg-pink-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105 cursor-pointer"
