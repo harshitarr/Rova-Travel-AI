@@ -101,82 +101,82 @@ export const slideData = [
 // Overlay content data for each destination
 export const overlayContent = {
   "Mystic Mountains": {
-    title: "Mystic Mountains Adventure",
+    title: "Popular Mountain Destinations",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1000&auto=format&fit=crop",
-        title: "Peak Exploration",
-        description: "Discover breathtaking summit views and challenging hiking trails. Experience the thrill of conquering majestic peaks. Perfect for adventure seekers and nature enthusiasts."
+        src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&auto=format&fit=crop",
+        title: "Swiss Alps, Switzerland",
+        description: "Home to the iconic Matterhorn and Jungfrau peaks. World-class skiing, hiking trails, and charming alpine villages. Experience breathtaking cable car rides and luxury mountain resorts."
       },
       {
-        src: "https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=1000&auto=format&fit=crop",
-        title: "Mountain Camping",
-        description: "Sleep under starlit skies in pristine mountain wilderness. Enjoy peaceful nights surrounded by nature's beauty. Wake up to spectacular sunrise views over the peaks."
+        src: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1200&auto=format&fit=crop",
+        title: "Himalayas, Nepal",
+        description: "Trek to Everest Base Camp and witness the world's highest peaks. Explore ancient Buddhist monasteries and Sherpa culture. Experience spiritual journeys through mountain landscapes."
       },
       {
-        src: "https://images.unsplash.com/photo-1464822759844-d150baec843a?q=80&w=1000&auto=format&fit=crop",
-        title: "Wildlife Encounters",
-        description: "Observe rare mountain wildlife in their natural habitat. Learn about diverse ecosystems and conservation efforts. Capture unforgettable moments with nature photography."
+        src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200&auto=format&fit=crop",
+        title: "Rocky Mountains, USA",
+        description: "Discover pristine wilderness in Colorado and Montana. Enjoy wildlife watching, fly fishing, and scenic drives. Visit stunning national parks like Yellowstone and Glacier."
       }
     ]
   },
   "Urban Dreams": {
-    title: "Urban Dreams Experience",
+    title: "Iconic City Destinations",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1000&auto=format&fit=crop",
-        title: "City Skylines",
-        description: "Marvel at stunning architectural masterpieces and modern cityscapes. Experience the energy of bustling metropolitan life. Discover iconic landmarks and hidden urban gems."
+        src: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=1200&auto=format&fit=crop",
+        title: "Paris, France",
+        description: "Visit the Eiffel Tower, Louvre Museum, and Notre-Dame Cathedral. Stroll along the Seine River and explore charming Montmartre. Indulge in world-famous French cuisine and wine."
       },
       {
-        src: "https://images.unsplash.com/photo-1551916437-d6ce467a4c00?q=80&w=1000&auto=format&fit=crop",
-        title: "Cultural Districts",
-        description: "Immerse yourself in vibrant arts and culture scenes. Explore museums, galleries, and street art installations. Experience diverse neighborhoods and local traditions."
+        src: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=1200&auto=format&fit=crop",
+        title: "Tokyo, Japan",
+        description: "Experience the perfect blend of ancient temples and futuristic technology. Explore vibrant neighborhoods like Shibuya and Harajuku. Savor authentic sushi, ramen, and Japanese street food."
       },
       {
-        src: "https://images.unsplash.com/photo-1481833761820-0509d3217039?q=80&w=1000&auto=format&fit=crop",
-        title: "Culinary Adventures",
-        description: "Savor world-class dining and street food experiences. Discover local flavors and international cuisine. Enjoy rooftop restaurants with panoramic city views."
+        src: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=1200&auto=format&fit=crop",
+        title: "New York City, USA",
+        description: "See the Statue of Liberty, Times Square, and Central Park. Experience Broadway shows and world-class museums. Enjoy diverse cuisine from every corner of the globe."
       }
     ]
   },
   "Neon Nights": {
-    title: "Neon Nights Experience",
+    title: "Best Nightlife Cities",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1520637836862-4d197d17c91a?q=80&w=1000&auto=format&fit=crop",
-        title: "Nightlife Scenes",
-        description: "Experience electrifying nightlife and entertainment districts. Dance the night away at trendy clubs and bars. Enjoy live music and spectacular light shows."
+        src: "https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=1200&auto=format&fit=crop",
+        title: "Las Vegas, USA",
+        description: "Experience legendary casinos, spectacular shows, and vibrant nightclubs. Enjoy world-class entertainment and dining on the Strip. Witness stunning fountain shows and neon lights."
       },
       {
-        src: "https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=1000&auto=format&fit=crop",
-        title: "Illuminated Landmarks",
-        description: "Witness iconic monuments and buildings beautifully lit after dark. Capture stunning night photography opportunities. Experience the city's magical transformation at night."
+        src: "https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?q=80&w=1200&auto=format&fit=crop",
+        title: "Bangkok, Thailand",
+        description: "Explore bustling night markets and rooftop bars with skyline views. Experience traditional Thai massage and street food culture. Visit illuminated temples and riverside attractions."
       },
       {
-        src: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=1000&auto=format&fit=crop",
-        title: "Evening Markets",
-        description: "Explore vibrant night markets and evening bazaars. Taste exotic street food and shop for unique souvenirs. Experience local culture and community gatherings."
+        src: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=1200&auto=format&fit=crop",
+        title: "Dubai, UAE",
+        description: "Marvel at the illuminated Burj Khalifa and Dubai Fountain. Enjoy luxury beach clubs and desert night safaris. Experience opulent dining and shopping in futuristic malls."
       }
     ]
   },
   "Desert Whispers": {
-    title: "Desert Whispers Journey",
+    title: "Stunning Desert Destinations",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=1000&auto=format&fit=crop",
-        title: "Endless Dunes",
-        description: "Traverse vast golden sand dunes stretching to the horizon. Experience the profound silence and beauty of desert landscapes. Enjoy camel trekking and sandboarding adventures."
+        src: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200&auto=format&fit=crop",
+        title: "Sahara Desert, Morocco",
+        description: "Ride camels through endless golden dunes in Merzouga. Camp under stars in traditional Berber tents. Experience authentic Moroccan hospitality and desert culture."
       },
       {
-        src: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1000&auto=format&fit=crop",
-        title: "Starlit Nights",
-        description: "Witness breathtaking stargazing opportunities in clear desert skies. Sleep in traditional Bedouin camps under countless stars. Experience the magic of desert astronomy."
+        src: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?q=80&w=1200&auto=format&fit=crop",
+        title: "Wadi Rum, Jordan",
+        description: "Explore the dramatic red desert landscapes of the Valley of the Moon. Visit ancient petroglyphs and Bedouin camps. Experience jeep tours and hot air balloon rides."
       },
       {
-        src: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1000&auto=format&fit=crop",
-        title: "Oasis Discovery",
-        description: "Find hidden oases with crystal-clear springs and palm groves. Learn about desert survival and ancient trade routes. Discover unique flora and fauna adaptations."
+        src: "https://images.unsplash.com/photo-1682686581551-867e0b208bd1?q=80&w=1200&auto=format&fit=crop",
+        title: "Atacama Desert, Chile",
+        description: "Witness the world's clearest night skies for stargazing. Explore salt flats, geysers, and colorful lagoons. Visit unique lunar-like landscapes and ancient ruins."
       }
     ]
   }
