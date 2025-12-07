@@ -60,11 +60,11 @@ const TripDetailsModal = ({ isOpen, onClose, trip }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden animate-slideUp mx-4"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] overflow-hidden animate-slideUp my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -104,7 +104,7 @@ const TripDetailsModal = ({ isOpen, onClose, trip }) => {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(95vh-140px)] custom-scrollbar bg-white">
+        <div className="overflow-y-auto max-h-[calc(90vh-140px)] custom-scrollbar bg-white">
           {activeTab === 'places' ? (
             data.length > 1 ? (
               <Timeline data={data} tripData={trip} />

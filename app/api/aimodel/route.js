@@ -30,7 +30,7 @@ const mockResponses = [
     ui: "interests"
   },
   {
-    resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you! 🌟",
+    resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you!",
     ui: "final"
   }
 ];
@@ -128,7 +128,7 @@ const SELECTION_FLOW = {
     ui: "interests"
   },
   interests: {
-    resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you! 🌟",
+    resp: "Perfect! I have all the information I need. Let me create an amazing trip plan for you!",
     ui: "final"
   },
   default: {

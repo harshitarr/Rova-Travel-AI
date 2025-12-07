@@ -112,7 +112,7 @@ const MyTripsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 py-8 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 animate-fadeIn">
+        <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">My Trips</h1>
           <p className="text-gray-600">Explore your travel adventures</p>
         </div>
@@ -126,7 +126,7 @@ const MyTripsPage = () => {
           </div>
         ) : (
           Object.entries(groupedTrips).map(([date, dateTrips]) => (
-            <div key={date} className="mb-12 animate-slideUp">
+            <div key={date} className="mb-12">
               {/* Date Header */}
               <div className="flex items-center gap-3 mb-4">
                 <Calendar className="w-5 h-5 text-pink-500" />
@@ -219,7 +219,6 @@ const TripCard = ({ trip, index, onView, onDelete }) => {
   return (
     <div 
       className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-2"
-      style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-pink-200 to-purple-200">

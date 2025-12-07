@@ -220,7 +220,12 @@ function Carousel({ slides, onExploreClick }) {
 
 // Export the main component for the page.jsx to import
 export function InteractiveCarousel() {
+  const [isMounted, setIsMounted] = useState(false);
   const [overlayData, setOverlayData] = useState(null);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const handleExploreClick = (slide) => {
     setOverlayData(overlayContent[slide.title] || null);
@@ -232,8 +237,12 @@ export function InteractiveCarousel() {
 
   const id = useId();
 
+  const animationClass = isMounted
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-8';
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center py-20 overflow-x-hidden">
+    <div className={`min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center py-20 overflow-x-hidden transition-all duration-1000 ease-out ${animationClass}`}>
       
       {/* 🌟 OVERALL HEADING PLACEMENT HERE 🌟 */}
       <h2 

@@ -1,10 +1,21 @@
 "use client";
 import WorldMap from "@/components/ui/world-map";
 import { motion } from "motion/react";
+import { useState, useEffect } from "react";
 
 export function WorldMapDemo() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const animationClass = isMounted
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-8';
+
   return (
-    <div className="py-40 dark:bg-black bg-white w-full">
+    <div className={`py-40 dark:bg-black bg-white w-full transition-all duration-1000 ease-out ${animationClass}`}>
       <div className="max-w-7xl mx-auto text-center">
         <p className="font-bold text-4xl md:text-5xl dark:text-white text-black">
           Global{" "}

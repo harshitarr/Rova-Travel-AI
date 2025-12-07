@@ -1,10 +1,21 @@
-import React from 'react'
+"use client"
+import React, { useState, useEffect } from 'react'
 import { footerLinks } from './constants'
 
 const Footer = () => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const animationClass = isMounted
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-8';
+
   return (
     <div>
-        <footer className="bg-[#222] text-white pt-12 pb-6 px-4 tracking-wide">
+        <footer className={`bg-[#222] text-white pt-12 pb-6 px-4 tracking-wide transition-all duration-1000 ease-out ${animationClass}`}>
       <div className="text-center">
         <ul className="flex gap-x-8 gap-y-3 justify-center flex-wrap">
           {footerLinks.map((link, index) => (

@@ -35,7 +35,7 @@ const DurationUi = ({ onSelectedOption }) => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm mt-2 max-w-sm mx-auto">
+    <div className="flex flex-col items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm mt-2 max-w-sm mx-auto animate-scaleIn">
       <h3 className="text-base font-medium text-gray-800 mb-4 text-center">
         How many days do you want to travel?
       </h3>
@@ -45,7 +45,7 @@ const DurationUi = ({ onSelectedOption }) => {
         {/* Minus Button */}
         <button
           onClick={decrementDays}
-          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-colors duration-200 text-gray-600 font-bold text-lg"
+          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-200 text-gray-600 font-bold text-lg transform hover:scale-110 active:scale-95"
           disabled={days <= 1}
         >
           −
@@ -53,7 +53,7 @@ const DurationUi = ({ onSelectedOption }) => {
 
         {/* Days Display - Clickable for single/double tap */}
         <div 
-          className="text-xl font-semibold text-gray-800 min-w-20 text-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded-lg transition-colors duration-200"
+          className="text-xl font-semibold text-gray-800 min-w-20 text-center cursor-pointer hover:bg-gray-50 px-2 py-1 rounded-lg transition-all duration-200 transform hover:scale-105"
           onClick={handleDaysClick}
           title="Single click to edit, double click to send"
         >
@@ -63,7 +63,7 @@ const DurationUi = ({ onSelectedOption }) => {
         {/* Plus Button */}
         <button
           onClick={incrementDays}
-          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-colors duration-200 text-gray-600 font-bold text-lg"
+          className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-200 text-gray-600 font-bold text-lg transform hover:scale-110 active:scale-95"
           disabled={days >= 30}
         >
           +
@@ -73,7 +73,7 @@ const DurationUi = ({ onSelectedOption }) => {
       {/* Confirm Button */}
       <Button
         onClick={handleConfirm}
-        className="bg-[#F472B6] hover:bg-[#EC4899] text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+        className="bg-[#F472B6] hover:bg-[#EC4899] text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
       >
         Confirm
       </Button>

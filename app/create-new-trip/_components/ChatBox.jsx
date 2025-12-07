@@ -540,10 +540,11 @@ const ChatBox = () => {
             key={index}
             className={`flex ${
               message.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            } animate-fadeIn`}
+            style={{ animationDelay: `${index * 0.05}s` }}
           >
             <div
-              className={`max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${
+              className={`max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md ${
                 message.role === "user"
                   ? "bg-[#F472B6] text-white rounded-br-md"
                   : "bg-white text-gray-800 border border-gray-200 rounded-bl-md"

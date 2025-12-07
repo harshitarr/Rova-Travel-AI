@@ -8,6 +8,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
 const Hero = () => {
+    const [isMounted, setIsMounted] = useState(false);
     const [typedText, setTypedText] = useState('');
     const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -15,6 +16,10 @@ const Hero = () => {
 
     const {user} = useUser();
     const router=useRouter();
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Typing effect
     useEffect(() => {
@@ -59,8 +64,13 @@ const Hero = () => {
         //Navigate to trip planning page or trigger trip planning action
         router.push('/create-new-trip');
     }
+
+    const animationClass = isMounted
+        ? 'opacity-100 translate-y-0'
+        : 'opacity-0 translate-y-8';
+
     return (
-        <div className='mt-24 w-full flex justify-center'>
+        <div className={`mt-24 w-full flex justify-center transition-all duration-1000 ease-out ${animationClass}`}>
             {/* Content Container - Centered and Max Width */}
             <div className='max-w-5xl w-full text-center space-y-6 flex flex-col items-center px-4'>
 
@@ -98,7 +108,7 @@ const Hero = () => {
                         return (
                             <div
                                 key={index}
-                                className={`flex items-center gap-2 border ${suggestion.borderColor} rounded-full px-4 py-2 cursor-pointer text-gray-700 ${suggestion.bgColor} ${suggestion.hoverColor} hover:text-white transition-all duration-300 text-sm md:text-base w-fit shadow-md`}
+                                className={`flex items-center gap-2 border ${suggestion.borderColor} rounded-full px-4 py-2 cursor-pointer text-gray-700 ${suggestion.bgColor} ${suggestion.hoverColor} hover:text-white transition-all duration-300 text-sm md:text-base w-fit shadow-md transform hover:scale-105 hover:-translate-y-1`}
                             >
                                 <Icon className={`${suggestion.iconColor} h-5 w-5`} />
                                 <h2>{suggestion.title}</h2>

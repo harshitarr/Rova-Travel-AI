@@ -1,10 +1,21 @@
-import React from 'react'
+"use client"
+import React, { useState, useEffect } from 'react'
 import { PricingTable } from '@clerk/nextjs'
 
 
 const page = () => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const animationClass = isMounted
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-8';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-out ${animationClass}`}>
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">

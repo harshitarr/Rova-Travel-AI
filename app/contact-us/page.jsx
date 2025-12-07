@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from 'react';
-import { Mail, MapPin, Phone, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, MapPin, Phone, Send, CheckCircle } from 'lucide-react';
 
 const ContactUsPage = () => {
+  const [isMounted, setIsMounted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,6 +13,10 @@ const ContactUsPage = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -34,8 +39,12 @@ const ContactUsPage = () => {
     }, 1500);
   };
 
+  const animationClass = isMounted
+    ? 'opacity-100 translate-y-0'
+    : 'opacity-0 translate-y-8';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className={`min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-out ${animationClass}`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -50,7 +59,7 @@ const ContactUsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
               <div className="flex items-start space-x-4">
                 <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Mail className="w-6 h-6 text-pink-600" />
@@ -63,7 +72,7 @@ const ContactUsPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-start space-x-4">
                 <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Phone className="w-6 h-6 text-pink-600" />
@@ -76,7 +85,7 @@ const ContactUsPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
               <div className="flex items-start space-x-4">
                 <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-6 h-6 text-pink-600" />
@@ -92,7 +101,7 @@ const ContactUsPage = () => {
 
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -162,8 +171,9 @@ const ContactUsPage = () => {
 
                 {submitStatus === 'success' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm font-medium">
-                      ✓ Message sent successfully! We'll get back to you soon.
+                    <p className="text-green-800 text-sm font-medium flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      Message sent successfully! We'll get back to you soon.
                     </p>
                   </div>
                 )}
@@ -171,7 +181,7 @@ const ContactUsPage = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#F472B6] hover:bg-pink-500 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#F472B6] hover:bg-pink-500 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
                 >
                   {isSubmitting ? (
                     <>
