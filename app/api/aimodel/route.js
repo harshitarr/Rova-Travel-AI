@@ -306,23 +306,42 @@ function calculateTokens(messages, isFinal = false) {
 // Google AI (Gemini) integration function
 async function createTripPlan(messages, isFinal = false) {
   try {
-    // Check if Google AI is configured
-    const hasGoogleAI = process.env.OPENAI_API_KEY && 
-                       process.env.OPENAI_API_KEY !== 'your_openai_api_key_here' &&
-                       process.env.OPENAI_BASE_URL;
-    
-    if (hasGoogleAI) {
-      // Import OpenAI client (configured for Google AI endpoint)
+    // Check if OpenRouter is configured
+    const hasOpenRouter = process.env.OPENROUTER_API_KEY;
+
+    if (hasOpenRouter) {
+      // Import OpenAI client (configured for OpenRouter endpoint)
       const { openai } = await import("@/configs/openai");
-      
+
+      // Support for image and text messages (for multimodal models)
+      const formattedMessages = messages.map(msg => {
+        if (msg.type === "image_url") {
+          return {
+            role: msg.role || "user",
+            content: [
+              {
+                type: "text",
+                text: msg.text || "What is in this image?"
+              },
+              {
+                type: "image_url",
+                image_url: { url: msg.image_url }
+              }
+            ]
+          };
+        }
+        // Default to original message structure
+        return msg;
+      });
+
       const completion = await openai.chat.completions.create({
-        model: process.env.OPENAI_MODEL || "gemini-2.0-flash",
+        model: "openrouter/auto",
         messages: [
           {
             role: "system",
             content: isFinal ? FINAL_PROMPT : PROMPT
           },
-          ...messages
+          ...formattedMessages
         ],
         temperature: 0.8,
         max_tokens: calculateTokens(messages, isFinal)
@@ -330,13 +349,13 @@ async function createTripPlan(messages, isFinal = false) {
 
       const responseText = completion.choices[0].message.content;
       const parseResult = cleanAndParseResponse(responseText);
-      
+
       return parseResult.data;
     } else {
       // Fallback mock responses for testing without API key
       const messageCount = messages.length;
       const responseIndex = Math.min(messageCount - 1, mockResponses.length - 1);
-      
+
       return mockResponses[responseIndex];
     }
 

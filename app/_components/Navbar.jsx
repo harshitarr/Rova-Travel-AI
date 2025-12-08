@@ -30,7 +30,8 @@ const Navbar = () => {
         const fetchCredits = async () => {
             if (user) {
                 try {
-                    const response = await fetch('/api/credits');
+                    // Send credentials to include Clerk session cookie
+                    const response = await fetch('/api/credits', { credentials: 'include' });
                     const data = await response.json();
                     console.log('Navbar credits fetch:', data);
                     if (data.success) {
