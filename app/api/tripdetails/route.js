@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { currentUser } from '@clerk/nextjs/server';
 import connectToDatabase from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import mongoose from 'mongoose';
@@ -7,14 +8,40 @@ export async function POST(request) {
   try {
     const payload = await request.json();
 
-    if (!payload || !payload.clerkId) {
-      return NextResponse.json({ error: 'Missing required field: clerkId' }, { status: 400 });
+    // Accept clerkId OR email. If clerkId is missing, attempt to resolve via Clerk session or email lookup.
+    if (!payload) {
+      return NextResponse.json({ error: 'Missing request payload' }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    // Find the user
-    const user = await User.findOne({ clerkId: payload.clerkId });
+    // Resolve clerkId from payload, clerk session, or email
+    let clerkId = payload.clerkId;
+    if (!clerkId) {
+      try {
+        const sessionUser = await currentUser();
+        clerkId = sessionUser?.id;
+        if (sessionUser?.primaryEmailAddress?.emailAddress && !payload.email) {
+          // populate payload.email for possible lookup/logging
+          payload.email = sessionUser.primaryEmailAddress.emailAddress;
+        }
+      } catch (e) {
+        // ignore - currentUser may fail in some environments
+        console.warn('Could not resolve clerk session user:', e?.message || e);
+      }
+    }
+
+    // If still no clerkId but email provided, try to find user by email and use their clerkId
+    let user = null;
+    if (clerkId) {
+      user = await User.findOne({ clerkId });
+    }
+
+    if (!user && payload.email) {
+      user = await User.findOne({ email: payload.email });
+      if (user && !clerkId) clerkId = user.clerkId;
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -49,7 +76,7 @@ export async function POST(request) {
     user.trips.push(trip);
     await user.save(); // This will trigger the pre-save middleware to update numberOfTrips
 
-    console.log(`Trip ${tripId} added to user ${payload.clerkId}. Total trips: ${user.numberOfTrips}`);
+    console.log(`Trip ${tripId} added to user ${clerkId}. Total trips: ${user.numberOfTrips}`);
 
     return NextResponse.json({ message: 'Trip created', trip }, { status: 201 });
   } catch (error) {
