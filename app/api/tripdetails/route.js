@@ -43,7 +43,29 @@ export async function POST(request) {
     }
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // If no user found, create a minimal placeholder user so trips can be saved.
+      // Generate a unique clerkId/email if none provided.
+      const generatedClerkId = clerkId || `anon_${tripId}`;
+      const generatedEmail = payload.email || `${generatedClerkId}@example.com`;
+      const generatedName = payload.name || 'Guest User';
+      const generatedImage = payload.imageUrl || '';
+
+      try {
+        user = new User({
+          clerkId: generatedClerkId,
+          name: generatedName,
+          email: generatedEmail,
+          imageUrl: generatedImage,
+          subscription: null,
+          trips: []
+        });
+
+        await user.save();
+        console.log(`Created placeholder user ${generatedClerkId} to save trip.`);
+      } catch (createErr) {
+        console.error('Failed to create placeholder user:', createErr?.message || createErr);
+        return NextResponse.json({ error: 'Failed to create user to save trip' }, { status: 500 });
+      }
     }
 
     // Generate tripId if not provided
