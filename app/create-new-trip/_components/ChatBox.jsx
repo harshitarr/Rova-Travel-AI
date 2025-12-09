@@ -37,17 +37,16 @@ const ChatBox = () => {
   const currentStep = STEPS[stepIndex];
   const chatRef = useRef(null);
 
+  // (Quick starter pills removed — UI will show the lower chat area only)
+
+
   // Auto-scroll
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages, isLoading]);
 
-  // Initialize assistant prompt for first step
-  useEffect(() => {
-    setMessages([
-      { role: "assistant", content: STEPS[0].label, ui: STEPS[0].key }
-    ]);
-  }, []);
+  // Do NOT initialize an assistant prompt here — user should start by clicking a quick option.
+  // Messages start empty so the quick-option pills are the first thing the user sees.
 
   // Advance step helper
   const goToNextStep = useCallback((providedValue) => {
@@ -55,16 +54,28 @@ const ChatBox = () => {
     if (providedValue !== undefined && providedValue !== null) {
       setMessages(prev => [...prev, { role: "user", content: providedValue }]);
     }
+    // If this is the very first user message (messages was empty), do not
+    // advance the step. Instead show the assistant prompt for the current
+    // step (usually `source`) so the user is explicitly asked the first
+    // question after they indicate intent.
+    if (messages.length === 0) {
+      const curStep = STEPS[stepIndex];
+      if (curStep && curStep.type !== 'final') {
+        setMessages(prev => [...prev, { role: 'assistant', content: curStep.label, ui: curStep.key }]);
+      }
+      return;
+    }
 
     const nextIndex = Math.min(stepIndex + 1, STEPS.length - 1);
     setStepIndex(nextIndex);
 
-    // push assistant prompt for next step (unless next is final which will be handled by generate)
+    // Push the assistant prompt for the next step into the chat so the user
+    // clearly sees the next question. This restores the questioning flow.
     const nextStep = STEPS[nextIndex];
     if (nextStep && nextStep.type !== "final") {
       setMessages(prev => [...prev, { role: "assistant", content: nextStep.label, ui: nextStep.key }]);
     }
-  }, [stepIndex]);
+  }, [stepIndex, messages]);
 
   // Handlers for selection components (they call with (value, isDoubleTap))
   const handleComponentSelect = useCallback((value, isDirect = false) => {
@@ -76,6 +87,8 @@ const ChatBox = () => {
       setUserInput(value);
     }
   }, [goToNextStep]);
+
+  // quick option handler removed (pills UI removed)
 
   const handleSend = useCallback(async () => {
     const trimmed = (userInput || "").trim();
@@ -244,6 +257,8 @@ const ChatBox = () => {
 
   return (
     <div className="h-[85vh] lg:w-[550px] w-full lg:min-w-[550px] flex-shrink-0 flex flex-col border rounded-2xl p-5">
+      {/* top quick-option pills removed per request; keep lower chat area collapsed by default */}
+
       {messages?.length === 0 && (
         <EmptyBoxState onSelectOption={(v)=>{ setUserInput(v); }} />
       )}
@@ -257,18 +272,27 @@ const ChatBox = () => {
           </div>
         ))}
 
-        {/* Active assistant prompt + UI */}
-        <div className="mt-2">
-          <div className="text-sm text-gray-600 font-medium">{currentStep?.label}</div>
-          {renderStepUI()}
-        </div>
+        {/* Active assistant prompt + UI - only show after user has started the conversation
+            For source/destination we DO NOT render the top bubble or UI; user should use
+            the bottom input (placeholder shows the question). */}
+        {messages.length > 0 && (
+          <div className="mt-2">
+            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
+              <div className="text-sm text-gray-600 font-medium">{currentStep.label}</div>
+            )}
+
+            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
+              renderStepUI()
+            )}
+          </div>
+        )}
       </section>
 
       <section className="p-4 bg-white border-t border-gray-200">
         <div className="w-full max-w-full mx-auto">
           <div className="flex items-center gap-3">
             <Textarea
-              placeholder="Type your answer here..."
+              placeholder={messages.length === 0 ? 'Type your answer here...' : (currentStep?.label || 'Type your answer here...')}
               className="flex-1 bg-transparent border-none focus-visible:ring-0 shadow-none resize-none text-base min-h-10 max-h-32 p-0 placeholder:text-gray-500"
               onChange={(e) => setUserInput(e.target.value)}
               value={userInput}
