@@ -1,10 +1,11 @@
 "use client";
-import React from 'react'
+import React, { useState } from 'react'
 import { useTripDetail } from '@/app/provider';
 import { Timeline } from "@/components/ui/timeline";
 import HotelCardItem from './HotelCardItem';
 import PlaceCardItem from './PlaceCardItem';
 import Image from 'next/image';
+import TripMap from '@/app/my-trips/_components/TripMap';
 
 
 // const TRIP_DATA = {
@@ -174,6 +175,7 @@ import Image from 'next/image';
 
 const Itinerary = () => {
   const { tripDetailInfo } = useTripDetail();
+  const [activeTab, setActiveTab] = useState('plans'); // 'plans' | 'map'
 
   const hotels = tripDetailInfo?.trip_plan?.hotels || [];
   const itineraryDays = tripDetailInfo?.trip_plan?.itinerary || [];
@@ -222,7 +224,34 @@ const Itinerary = () => {
     <div className="h-full w-full relative">
       {tripDetailInfo ? (
         <div className="h-full overflow-auto">
-          <Timeline data={data} tripData={tripDetailInfo || {}} />
+          {/* Tabs header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setActiveTab('plans')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${activeTab === 'plans' ? 'bg-pink-100 text-pink-600' : 'bg-white text-gray-600 border border-gray-200'}`}>
+                Plans
+              </button>
+              <button
+                onClick={() => setActiveTab('map')}
+                className={`px-3 py-1 rounded-full text-sm font-medium ${activeTab === 'map' ? 'bg-pink-100 text-pink-600' : 'bg-white text-gray-600 border border-gray-200'}`}>
+                Map
+              </button>
+            </div>
+            <div className="text-sm text-neutral-500">{tripDetailInfo.title || tripDetailInfo.destination || ''}</div>
+          </div>
+
+          <div className="px-6 pb-6">
+            {activeTab === 'plans' ? (
+              <div className="h-[72vh] overflow-auto">
+                <Timeline data={data} tripData={tripDetailInfo || {}} />
+              </div>
+            ) : (
+              <div>
+                <TripMap hotels={hotels} itinerary={itineraryDays} />
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         // Fallback UI: single responsive image that fills the right pane height
