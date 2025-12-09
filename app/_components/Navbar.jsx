@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
-import { Package, Sparkles, Ticket, Crown } from 'lucide-react';
+import { Sparkles, Ticket, Crown } from 'lucide-react';
 
 
 
@@ -57,18 +57,18 @@ const Navbar = () => {
         <nav 
             className={`sticky top-0 z-50 bg-white shadow-md transition-all duration-700 ease-out ${animationClass}`}
         >
-            <div className='grid grid-cols-3 items-center px-4 md:px-8 py-3'>
+            <div className='flex items-center justify-between md:grid md:grid-cols-3 md:items-center px-4 md:px-8 py-3'>
 
                 {/* Logo and Branding */}
                 <div className='col-start-1 flex items-center gap-2'>
-                <Link href="/" className="flex items-center gap-2">
-                    <Plane size={32} className='text-[#F472B6] w-10 h-10 transform transition-transform duration-500 hover:rotate-12'/>
-                    <h2 className="text-2xl font-extrabold tracking-tight text-gray-800">Rova AI</h2>
+                    <Link href="/" className="flex items-center gap-2">
+                        <Plane className='text-[#F472B6] w-8 h-8 md:w-10 md:h-10 transform transition-transform duration-500 hover:rotate-12'/>
+                        <h2 className="text-lg md:text-2xl font-extrabold tracking-tight text-gray-800">Rova AI</h2>
                     </Link>
                 </div>
 
                 {/* Desktop Menu Options - Centered */}
-                <div className='hidden md:flex gap-8 items-center justify-center col-start-2'>
+                <div className='hidden md:flex gap-8 items-center justify-center col-start-2 overflow-x-auto'>
                     {menuOptions.map((menu, index) => {
                         // Check if the current path matches the menu item's path
                         const isActive = currentPath === menu.path;
@@ -89,58 +89,85 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Get Started Button / User Button */}
-                {!user ? (
-                    <div className='col-start-3 flex justify-end'>
-                    <SignInButton>
-                        <Button className='hidden md:block bg-[#F472B6] hover:bg-pink-400 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
-                            Get Started
-                        </Button>
-                    </SignInButton>
-                    </div>
-                ) : (
-                    <div className="col-start-3 flex justify-end items-center gap-3">
-                        <Link href="/create-new-trip">
-                         <Button 
-                            className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
-                            onClick={() => console.log('My Trips clicked')}
-                        >
-                            <Sparkles size={16}/>
-                           Generate Plan
-                        </Button>
-                        </Link>
-                        <Link href="/my-trips">
-                        <Button 
-                            className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
-                        >
-                            <Package size={16} />
-                            My Trips
-                        </Button>
-                        </Link>
-                        {creditsInfo && (
-                            creditsInfo.unlimited ? (
-                                <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-yellow-50 border border-yellow-200 text-sm font-semibold text-yellow-800 mr-2">
-                                    <Crown className="w-4 h-4 text-yellow-600" />
-                                    <span>Premium</span>
-                                </div>
+                <div className="col-start-3 flex items-center justify-end gap-3">
+                    {/* Desktop / md+ full actions */}
+                    {!user ? (
+                        <div className='hidden md:flex items-center'>
+                            <SignInButton>
+                                <Button className='bg-[#F472B6] hover:bg-pink-400 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
+                                    Get Started
+                                </Button>
+                            </SignInButton>
+                        </div>
+                    ) : (
+                        <div className='hidden md:flex items-center gap-3'>
+                            <Link href="/create-new-trip">
+                                <Button 
+                                    className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
+                                >
+                                    <Sparkles size={16}/>
+                                    Generate Plan
+                                </Button>
+                            </Link>
+                            <Link href="/my-trips">
+                                <Button 
+                                    className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
+                                >
+                                    My Trips
+                                </Button>
+                            </Link>
+                            {creditsInfo && (
+                                creditsInfo.unlimited ? (
+                                    <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-yellow-50 border border-yellow-200 text-sm font-semibold text-yellow-800 mr-2">
+                                        <Crown className="w-4 h-4 text-yellow-600" />
+                                        <span>Premium</span>
+                                    </div>
                                 ) : (
-                                <div className="flex items-center justify-center gap-1 px-3 py-1.5 min-w-[56px] rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700 mr-2">
-                                    <Ticket className="w-4 h-4 text-blue-600" />
-                                    <span className="text-sm font-semibold">{creditsInfo.remaining}/5</span>
-                                </div>
-                            )
-                        )}
-                        <UserButton />
-                    </div>
-                )}
+                                    <div className="flex items-center justify-center gap-1 px-3 py-1.5 min-w-[56px] rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700 mr-2">
+                                        <Ticket className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-semibold">{creditsInfo.remaining}/5</span>
+                                    </div>
+                                )
+                            )}
+                            <UserButton />
+                        </div>
+                    )}
 
-                {/* Mobile Menu Button (Hamburger) */}
-                <button
-                    className='md:hidden p-2 text-gray-500 hover:text-pink-500 transition-colors duration-300'
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    aria-label="Toggle menu"
-                >
-                    {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                </button>
+                    {/* Mobile compact actions (visible on small screens) */}
+                    <div className="flex md:hidden items-center gap-2">
+                        {user && (
+                            <>
+                                <Link href="/create-new-trip" aria-label="Generate plan" className="p-2 rounded-md hover:bg-gray-100">
+                                    <Sparkles size={18} className="text-pink-500" />
+                                </Link>
+                                {/* My Trips icon removed on mobile compact view */}
+                                {creditsInfo && (
+                                    creditsInfo.unlimited ? (
+                                        <div className="flex items-center px-2 py-1 rounded-md bg-yellow-50 border border-yellow-200 text-sm font-semibold text-yellow-800">
+                                            <Crown className="w-4 h-4 text-yellow-600" />
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center px-2 py-1 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                            <Ticket className="w-4 h-4 text-blue-600" />
+                                            <span className="ml-1 text-xs font-semibold">{creditsInfo.remaining}</span>
+                                        </div>
+                                    )
+                                )}
+                            </>
+                        )}
+                        {/* Mobile menu toggle */}
+                        <button
+                            className='p-2 text-gray-500 hover:text-pink-500 transition-colors duration-300'
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Desktop: ensure the hamburger isn't duplicated */}
+                <div className='hidden md:block' />
 
             </div>
 
@@ -185,7 +212,6 @@ const Navbar = () => {
                             <Button 
                                 className='w-full bg-[#F472B6] hover:bg-pink-500 text-white flex items-center justify-center gap-2 cursor-pointer'
                             >
-                                <Package size={16} />
                                 My Trips
                             </Button>
                             </Link>
