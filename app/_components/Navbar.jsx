@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plane, Menu, X } from 'lucide-react';
+import { Plane, Menu, X, Box } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
@@ -112,7 +112,7 @@ const Navbar = () => {
                             <Link href="/my-trips">
                                 <Button 
                                     className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
-                                >
+                                ><Box size={16}/>
                                     My Trips
                                 </Button>
                             </Link>
@@ -211,7 +211,7 @@ const Navbar = () => {
                             <Link href="/my-trips" className="w-full">
                             <Button 
                                 className='w-full bg-[#F472B6] hover:bg-pink-500 text-white flex items-center justify-center gap-2 cursor-pointer'
-                            >
+                            ><Box size={16}/>
                                 My Trips
                             </Button>
                             </Link>
