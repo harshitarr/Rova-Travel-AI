@@ -243,11 +243,27 @@ const ChatBox = () => {
     }
 
     if (currentStep.type === 'final') {
+      // Centered final panel: show completion card and centered primary button
       return (
-        <div className="mt-4">
-          <TravelLoadingAnimation isGenerating={finalizing || isLoading} onViewTrip={()=>{}} />
-          <div className="flex mt-3 justify-end">
-            <Button size="sm" onClick={generateFinal} disabled={finalizing || isLoading}>Generate Trip</Button>
+        <div className="w-full flex flex-col items-center justify-center mt-6">
+          <div className="w-full max-w-xl bg-white rounded-2xl shadow-md p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-pink-300 mx-auto flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Trip Planning Complete!</h3>
+            <p className="text-sm text-gray-600">Your personalized travel itinerary is ready</p>
+          </div>
+
+          <div className="mt-6">
+            <button
+              onClick={generateFinal}
+              disabled={finalizing || isLoading}
+              className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 rounded-full shadow-lg focus:outline-none disabled:opacity-60"
+            >
+              {finalizing || isLoading ? 'Generating...' : 'Generate Trip'}
+            </button>
           </div>
         </div>
       );
@@ -277,10 +293,13 @@ const ChatBox = () => {
             the bottom input (placeholder shows the question). */}
         {messages.length > 0 && (
           <div className="mt-2">
-            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
+            {/* If assistant already posted this step as a chat message (ui === key),
+                don't render the duplicate top label. */}
+            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && !messages.some(m => m.role === 'assistant' && m.ui === currentStep.key) && (
               <div className="text-sm text-gray-600 font-medium">{currentStep.label}</div>
             )}
 
+            {/* Always render component UI for non-source/destination steps */}
             {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
               renderStepUI()
             )}

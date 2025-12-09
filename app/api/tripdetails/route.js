@@ -45,7 +45,7 @@ export async function POST(request) {
     if (!user) {
       // If no user found, create a minimal placeholder user so trips can be saved.
       // Generate a unique clerkId/email if none provided.
-      const generatedClerkId = clerkId || `anon_${tripId}`;
+      const generatedClerkId = clerkId || `anon_${new mongoose.Types.ObjectId().toString()}`;
       const generatedEmail = payload.email || `${generatedClerkId}@example.com`;
       const generatedName = payload.name || 'Guest User';
       const generatedImage = payload.imageUrl || '';
@@ -77,6 +77,47 @@ export async function POST(request) {
       interests = interests.split(',').map(s => s.trim()).filter(Boolean);
     }
 
+    // Normalize trip_plan and itinerary (support payload where itinerary is nested under trip_plan)
+    const trip_plan = payload.trip_plan || {};
+    trip_plan.itinerary = trip_plan.itinerary || payload.itinerary || [];
+
+    // Helper to build a simple timeline from itinerary days
+    const buildTimelineFromItinerary = (itinerary = []) => {
+      const timeline = [];
+      itinerary.forEach(dayItem => {
+        const dayLabel = dayItem.day || dayItem.day_label || null;
+        const activities = dayItem.activities || [];
+        activities.forEach((act, idx) => {
+          timeline.push({
+            id: new mongoose.Types.ObjectId().toString(),
+            day: dayLabel,
+            title: act.place_name || act.title || `Activity ${idx + 1}`,
+            description: act.place_details || act.description || '',
+            time_estimate: act.time_travel_each_location || act.duration || null,
+            location: act.geo_coordinates || null,
+            address: act.place_address || act.address || null
+          });
+        });
+      });
+      return timeline;
+    };
+
+    // Ensure timeline exists on trip_plan
+    if (!trip_plan.timeline || !Array.isArray(trip_plan.timeline) || trip_plan.timeline.length === 0) {
+      trip_plan.timeline = buildTimelineFromItinerary(trip_plan.itinerary);
+    }
+
+    // Ensure iterations snapshot exists
+    if (!trip_plan.iterations || !Array.isArray(trip_plan.iterations) || trip_plan.iterations.length === 0) {
+      trip_plan.iterations = [
+        {
+          id: new mongoose.Types.ObjectId().toString(),
+          createdAt: new Date(),
+          data: JSON.parse(JSON.stringify(trip_plan))
+        }
+      ];
+    }
+
     // Create trip object
     const trip = {
       tripId,
@@ -87,8 +128,8 @@ export async function POST(request) {
       budget: payload.budget || '',
       groupSize: payload.groupSize || '',
       interests,
-      trip_plan: payload.trip_plan || {},
-      itinerary: payload.itinerary || [],
+      trip_plan,
+      itinerary: trip_plan.itinerary || [],
       notes: payload.notes || '',
       createdAt: new Date(),
       updatedAt: new Date()
