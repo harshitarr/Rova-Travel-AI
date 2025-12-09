@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { menuOptions } from './constants';
 import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
-import { Package, Sparkles, Ticket } from 'lucide-react';
+import { Package, Sparkles, Ticket, Crown } from 'lucide-react';
 
 
 
 const Navbar = () => {
     
     const [isMounted, setIsMounted] = useState(false);
-    const [credits, setCredits] = useState(null);
+    const [creditsInfo, setCreditsInfo] = useState(null);
     const { user } = useUser();
     const currentPath = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,7 +35,7 @@ const Navbar = () => {
                     const data = await response.json();
                     console.log('Navbar credits fetch:', data);
                     if (data.success) {
-                        setCredits(data.remaining);
+                        setCreditsInfo(data);
                     }
                 } catch (error) {
                     console.error('Error fetching credits:', error);
@@ -57,16 +57,18 @@ const Navbar = () => {
         <nav 
             className={`sticky top-0 z-50 bg-white shadow-md transition-all duration-700 ease-out ${animationClass}`}
         >
-            <div className='flex justify-between items-center px-4 md:px-8 py-3'>
+            <div className='grid grid-cols-3 items-center px-4 md:px-8 py-3'>
 
                 {/* Logo and Branding */}
+                <div className='col-start-1 flex items-center gap-2'>
                 <Link href="/" className="flex items-center gap-2">
                     <Plane size={32} className='text-[#F472B6] w-10 h-10 transform transition-transform duration-500 hover:rotate-12'/>
                     <h2 className="text-2xl font-extrabold tracking-tight text-gray-800">Rova AI</h2>
-                </Link>
+                    </Link>
+                </div>
 
                 {/* Desktop Menu Options - Centered */}
-                <div className='hidden md:flex gap-8 items-center absolute left-1/2 transform -translate-x-1/2'>
+                <div className='hidden md:flex gap-8 items-center justify-center col-start-2'>
                     {menuOptions.map((menu, index) => {
                         // Check if the current path matches the menu item's path
                         const isActive = currentPath === menu.path;
@@ -88,13 +90,15 @@ const Navbar = () => {
 
                 {/* Desktop Get Started Button / User Button */}
                 {!user ? (
+                    <div className='col-start-3 flex justify-end'>
                     <SignInButton>
                         <Button className='hidden md:block bg-[#F472B6] hover:bg-pink-400 transform transition-transform duration-300 hover:scale-[1.02] active:scale-95 shadow-lg hover:shadow-xl'>
                             Get Started
                         </Button>
                     </SignInButton>
+                    </div>
                 ) : (
-                    <div className="hidden md:flex items-center gap-3">
+                    <div className="col-start-3 flex justify-end items-center gap-3">
                         <Link href="/create-new-trip">
                          <Button 
                             className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
@@ -112,11 +116,18 @@ const Navbar = () => {
                             My Trips
                         </Button>
                         </Link>
-                        {credits !== null && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
-                                <Ticket className="w-4 h-4" />
-                                <span>{credits}/5</span>
-                            </div>
+                        {creditsInfo && (
+                            creditsInfo.unlimited ? (
+                                <div className="flex items-center gap-1 px-3 py-1 rounded-md bg-yellow-50 border border-yellow-200 text-sm font-semibold text-yellow-800 mr-2">
+                                    <Crown className="w-4 h-4 text-yellow-600" />
+                                    <span>Premium</span>
+                                </div>
+                                ) : (
+                                <div className="flex items-center justify-center gap-1 px-3 py-1.5 min-w-[56px] rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700 mr-2">
+                                    <Ticket className="w-4 h-4 text-blue-600" />
+                                    <span className="text-sm font-semibold">{creditsInfo.remaining}/5</span>
+                                </div>
+                            )
                         )}
                         <UserButton />
                     </div>
@@ -178,11 +189,18 @@ const Navbar = () => {
                                 My Trips
                             </Button>
                             </Link>
-                            {credits !== null && (
-                                <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
-                                    <Ticket className="w-4 h-4" />
-                                    <span>{credits}/5 Credits</span>
-                                </div>
+                            {creditsInfo && (
+                                creditsInfo.unlimited ? (
+                                    <div className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-yellow-50 border border-yellow-200 text-sm font-semibold text-yellow-800">
+                                        <Crown className="w-4 h-4 text-yellow-600" />
+                                        <span>Premium</span>
+                                    </div>
+                                ) : (
+                                    <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">
+                                        <Ticket className="w-4 h-4 text-blue-600" />
+                                        <span className="text-sm font-semibold">{creditsInfo.remaining}/5</span>
+                                    </div>
+                                )
                             )}
                             <UserButton />
                         </div>

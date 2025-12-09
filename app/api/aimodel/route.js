@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { currentUser, auth } from "@clerk/nextjs/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/lib/models/User";
 
@@ -412,33 +412,28 @@ export async function POST(req) {
       );
     }
     
-    // Check MongoDB for actual trip count today
-    const tripsCreatedToday = await getTripsCreatedToday(clerkId);
-    const remainingCredits = 5 - tripsCreatedToday;
-    
-    console.log("===== CREDIT VERIFICATION (MongoDB Only) =====");
-    console.log(`User: ${userId}`);
-    console.log(`Clerk ID: ${clerkId}`);
-    console.log(`Trips created today: ${tripsCreatedToday}/5`);
-    console.log(`Remaining credits: ${remainingCredits}`);
-    console.log(`Is final trip generation: ${isFinal}`);
-    
-    // Check if user has reached daily limit (5 trips per day)
-    if (tripsCreatedToday >= 5) {
-      console.log("❌ BLOCKED: User has already created 5 trips today");
-      console.log("Credits will reset at midnight (12:00 AM)");
-      console.log("============================================");
-      return NextResponse.json(
-        createApiResponse(
-          "Sorry, you've used all your 5 free trip plans for today! 🎫 Your credits will refill tomorrow at midnight, or upgrade your plan for unlimited trips.",
-          "limit"
-        ),
-        { status: 200 }
-      );
+    // Use only auth-based premium check as requested (plan key: 'monthy')
+    let hasPremiumAccess = false;
+    let decision = null;
+    try {
+      const { has } = await auth();
+      hasPremiumAccess = typeof has === 'function' ? has({ plan: 'monthy' }) : false;
+      // auth.protect can provide decision.reason.remaining etc.
+      if (typeof auth.protect === 'function') {
+        // pass request-like object for protect; Next.js Request is acceptable
+        decision = await auth.protect(req, { userId: user?.id });
+      }
+    } catch (err) {
+      console.warn('Auth-based premium check failed:', err?.message || err);
     }
-    
-    console.log(`✅ ALLOWED: User can proceed (${remainingCredits} credits remaining)`);
-    console.log("============================================");
+
+    console.log('Auth premium check:', { hasPremiumAccess, decision });
+
+    // Apply the exact check you provided: if remaining == 0 AND hasPremiumAccess -> return limit
+    // (implemented exactly as requested)
+    if (decision?.reason?.remaining == 0 && hasPremiumAccess) {
+      return NextResponse.json(createApiResponse('No Free Credit Remaining', 'limit'), { status: 200 });
+    }
     
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(

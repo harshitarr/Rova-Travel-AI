@@ -45,6 +45,13 @@ const ChatBox = () => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages, isLoading]);
 
+  // When the left chat is cleared, also clear the right-side trip details
+  useEffect(() => {
+    if (messages.length === 0 && typeof setTripDetailInfo === 'function') {
+      setTripDetailInfo(null);
+    }
+  }, [messages, setTripDetailInfo]);
+
   // Do NOT initialize an assistant prompt here — user should start by clicking a quick option.
   // Messages start empty so the quick-option pills are the first thing the user sees.
 
@@ -57,12 +64,38 @@ const ChatBox = () => {
     // If this is the very first user message (messages was empty), do not
     // advance the step. Instead show the assistant prompt for the current
     // step (usually `source`) so the user is explicitly asked the first
-    // question after they indicate intent.
+    // question after they indicate intent. Before showing any assistant
+    // message, verify the user's remaining credits so we can show a limit
+    // message immediately when credits are exhausted.
     if (messages.length === 0) {
-      const curStep = STEPS[stepIndex];
-      if (curStep && curStep.type !== 'final') {
-        setMessages(prev => [...prev, { role: 'assistant', content: curStep.label, ui: curStep.key }]);
-      }
+          (async () => {
+        try {
+          const creditResp = await axios.get('/api/credits', { withCredentials: true });
+          const unlimited = creditResp?.data?.unlimited === true;
+          const remaining = creditResp?.data?.remaining;
+          const subscription = creditResp?.data?.subscription || null;
+
+          // If user is premium, show a small premium badge message (non-blocking)
+          if (unlimited && subscription === 'premium') {
+            setMessages(prev => [...prev, { role: 'assistant', content: '👑 Premium Member — unlimited trips', ui: 'premium' }]);
+            // continue to show the assistant question below
+          }
+
+          if (!unlimited && typeof remaining === 'number' && remaining <= 0) {
+            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, you've used all your free trip plans for today. Your credits will refill tomorrow at midnight.", ui: 'limit' }]);
+            return;
+          }
+        } catch (err) {
+          // If credits endpoint fails, allow flow to continue (do not block UX)
+          console.warn('Credits check failed:', err?.message || err);
+        }
+
+        const curStep = STEPS[stepIndex];
+        if (curStep && curStep.type !== 'final') {
+          setMessages(prev => [...prev, { role: 'assistant', content: curStep.label, ui: curStep.key }]);
+        }
+      })();
+
       return;
     }
 
@@ -113,9 +146,24 @@ const ChatBox = () => {
     try {
       setIsLoading(true);
       setFinalizing(true);
+      // Check credits before attempting final generation
+          try {
+            const creditResp = await axios.get('/api/credits', { withCredentials: true });
+        const unlimited = creditResp?.data?.unlimited === true;
+        const remaining = creditResp?.data?.remaining;
+        if (!unlimited && typeof remaining === 'number' && remaining <= 0) {
+          setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, you've used all your free trip plans for today. Your credits will refill tomorrow at midnight.", ui: 'limit' }]);
+          setFinalizing(false);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        // If credits endpoint fails, continue but log it
+        console.warn('Credits check failed before final generation:', err?.message || err);
+      }
 
       // Call aimodel with the conversation so far; server will return final trip data
-      const resp = await axios.post('/api/aimodel', { messages, isFinal: true });
+      const resp = await axios.post('/api/aimodel', { messages, isFinal: true }, { withCredentials: true });
       if (!resp?.data) throw new Error('No response from AI');
 
       const { success, resp: aiResp, ui } = resp.data;
@@ -175,7 +223,7 @@ const ChatBox = () => {
 
       // Save to backend
       try {
-        const saveResp = await axios.post('/api/tripdetails', payload);
+        const saveResp = await axios.post('/api/tripdetails', payload, { withCredentials: true });
         const saved = saveResp?.data?.trip || saveResp?.data || null;
         if (saved && typeof setTripDetailInfo === 'function') {
           setTripDetailInfo(saved);
@@ -228,16 +276,6 @@ const ChatBox = () => {
       return (
         <div className="mt-3">
           <Component onSelectedOption={handleComponentSelect} />
-          {/* show input preview + manual send */}
-          {userInput && (
-            <div className="mt-3">
-              <div className="text-sm text-gray-700 mb-2">Preview:</div>
-              <Textarea value={userInput} onChange={(e)=>setUserInput(e.target.value)} />
-              <div className="flex mt-2 justify-end">
-                <Button size="sm" onClick={handleSend} disabled={!userInput.trim() || isLoading}>Send</Button>
-              </div>
-            </div>
-          )}
         </div>
       );
     }
@@ -282,7 +320,7 @@ const ChatBox = () => {
       <section ref={chatRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-3 scroll-smooth">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}> 
-            <div className={`max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${m.role === 'user' ? 'bg-[#F472B6] text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+            <div className={`max-w-[90%] lg:max-w-[70%] px-4 py-3 rounded-2xl shadow-sm ${m.role === 'user' ? 'bg-[#F472B6] text-white' : (m.ui === 'premium' ? 'bg-yellow-50 text-yellow-900 border border-yellow-200' : 'bg-white text-gray-800 border border-gray-200')}`}>
               <div className="whitespace-pre-wrap text-sm">{m.content}</div>
             </div>
           </div>
