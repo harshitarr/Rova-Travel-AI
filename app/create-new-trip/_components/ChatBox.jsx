@@ -52,8 +52,7 @@ const ChatBox = () => {
     }
   }, [messages, setTripDetailInfo]);
 
-  // Do NOT initialize an assistant prompt here — user should start by clicking a quick option.
-  // Messages start empty so the quick-option pills are the first thing the user sees.
+
 
   // Advance step helper
   const goToNextStep = useCallback((providedValue) => {
