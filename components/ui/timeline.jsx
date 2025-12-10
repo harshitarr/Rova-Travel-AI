@@ -71,7 +71,47 @@ export const Timeline = ({ data, tripData: TripInfo }) => {
                 className="md:hidden block text-2xl mb-4 text-left font-bold text-neutral-500 dark:text-neutral-500">
                 {item.title}
               </h3>
-              {item.content}{" "}
+
+              {/* Render a Leisure Day UI when this item is a Day and the corresponding itinerary day has no activities */}
+              {(() => {
+                try {
+                  const dayMatch = String(item.title).match(/Day\s*(\d+)/i);
+                  if (dayMatch && TripInfo?.trip_plan?.itinerary) {
+                    const dayNum = Number(dayMatch[1]);
+                    const foundDay = TripInfo.trip_plan.itinerary.find((d, i) => {
+                      const dnum = (d && (d.day !== undefined && d.day !== null)) ? Number(d.day) : (i + 1);
+                      return Number(dnum) === dayNum;
+                    });
+
+                    if (foundDay && (!Array.isArray(foundDay.activities) || foundDay.activities.length === 0)) {
+                      return (
+                        <div className="my-4">
+                          <div className="relative overflow-hidden rounded-lg border-l-4 border-pink-500 bg-pink-50/60 p-6">
+                            <svg className="absolute -top-6 -right-6 opacity-20 w-48 h-48 pointer-events-none" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                              <g transform="translate(10,10)">
+                                <circle cx="10" cy="10" r="2" fill="#F472B6" />
+                                <circle cx="40" cy="20" r="1.5" fill="#A855F7" />
+                                <circle cx="70" cy="8" r="1.2" fill="#F472B6" />
+                                <circle cx="80" cy="40" r="2" fill="#A855F7" />
+                                <circle cx="20" cy="55" r="1.4" fill="#F472B6" />
+                              </g>
+                            </svg>
+
+                            <div className="relative z-10">
+                              <div className="text-lg font-semibold text-gray-800">Leisure Day</div>
+                              <div className="mt-1 text-sm text-neutral-600">Free time — no scheduled activities for this day.</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+                } catch (e) {
+                  // If anything unexpected happens, fall back to the provided content
+                  console.warn('Timeline leisure detection error', e);
+                }
+                return item.content;
+              })()}{" "}
             </div>
           </div>
         ))}
