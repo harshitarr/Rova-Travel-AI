@@ -68,14 +68,14 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Menu Options - Centered */}
-                <div className='hidden md:flex gap-8 items-center justify-center col-start-2 overflow-x-auto'>
+                <div className='hidden md:flex md:col-start-2 md:justify-center md:items-center md:gap-10 md:mx-auto'>
                     {menuOptions.map((menu, index) => {
                         // Check if the current path matches the menu item's path
                         const isActive = currentPath === menu.path;
                         return (
                             <Link href={menu.path} key={index} className='group'>
                                 <div className={`relative transition-all duration-300 ${isActive ? 'text-[#F472B6] font-semibold' : 'text-gray-500 hover:text-pink-500'}`}>
-                                    <h2 className='text-lg cursor-pointer transform transition-transform duration-300 hover:scale-105'>
+                                    <h2 className='text-sm lg:text-lg cursor-pointer transform transition-transform duration-300 hover:scale-105'>
                                         {menu.name}
                                     </h2>
                                     {/* Active link indicator line */}
@@ -89,7 +89,7 @@ const Navbar = () => {
                 </div>
 
                 {/* Desktop Get Started Button / User Button */}
-                <div className="col-start-3 flex items-center justify-end gap-3">
+                <div className="col-start-3 flex items-center justify-end gap-4">
                     {/* Desktop / md+ full actions */}
                     {!user ? (
                         <div className='hidden md:flex items-center'>
@@ -103,17 +103,17 @@ const Navbar = () => {
                         <div className='hidden md:flex items-center gap-3'>
                             <Link href="/create-new-trip">
                                 <Button 
-                                    className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
+                                    className=' bg-white border border-pink-500 hover:bg-pink-300 hover:text-white text-[#F472B6] px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
                                 >
                                     <Sparkles size={16}/>
-                                    Generate Plan
+                                    <span className='hidden lg:inline'>Generate Plan</span>
                                 </Button>
                             </Link>
                             <Link href="/my-trips">
                                 <Button 
-                                    className='bg-[#F472B6] hover:bg-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
+                                    className='bg-[#F472B6] hover:bg-pink-500 text-white px-3 py-2 rounded-lg flex items-center gap-2 cursor-pointer'
                                 ><Box size={16}/>
-                                    My Trips
+                                    <span className='hidden lg:inline'>My Trips</span>
                                 </Button>
                             </Link>
                             {creditsInfo && (
