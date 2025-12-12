@@ -35,59 +35,54 @@ const mockResponses = [
   }
 ];
 
-const FINAL_PROMPT = `Generate a COMPLETE Travel Plan with all given details. Provide Hotels options list with HotelName,
-Hotel address, Price, hotel image url, geo coordinates, rating, descriptions and suggest a FULL itinerary with placeName, Place Details, Place Image Url,
-Geo Coordinates, Place address, ticket Pricing, Time travel each of the location, with EACH DAY plan for the ENTIRE duration and best time to visit in JSON format.
+const FINAL_PROMPT = `You are a strict JSON generator for travel plans. Your ONLY output must be a single valid JSON object matching the schema below—NO markdown, NO code blocks, NO extra text, NO explanations, and NO truncation. If you run out of real places, invent plausible or related spots, or repeat/restyle activities, but NEVER leave any day or activity missing or empty. If you cannot find a real place, use a generic but plausible name (e.g., "Local Park", "City Museum").
 
-IMPORTANT: Generate itinerary for ALL days specified in the duration. If user requested 3 days, provide activities for Day 1, Day 2, AND Day 3. Do not truncate or skip days.
+If the user requests N days, you MUST return a complete itinerary for ALL N days, with each day containing at least one activity. Do NOT skip, summarize, or truncate any day. If you cannot fit all details, make up plausible content to fill the schema.
+
+ABSOLUTELY FORBIDDEN: markdown, code blocks, explanations, apologies, or any text outside the JSON object.
 
 Output Schema:
 {
-"trip_plan": {
-"destination": "string",
-"duration": "string",
-"origin": "string",
-"budget": "string",
-"groupSize": "string",
-"interests": "string",
-"hotels": [
-{
-"hotel_name": "string",
-"hotel_address": "string",
-"price_per_night": "string",
-"hotel_image_url": "string",
-"geo_coordinates": {
-"latitude": "number",
-"longitude": "number"
-},
-"rating": "number",
-"description": "string"
+  "trip_plan": {
+    "destination": "string",
+    "duration": "string",
+    "origin": "string",
+    "budget": "string",
+    "groupSize": "string",
+    "interests": "string or array",
+    "hotels": [
+      {
+        "hotel_name": "string",
+        "hotel_address": "string",
+        "price_per_night": "string",
+        "hotel_image_url": "string",
+        "geo_coordinates": { "latitude": "number", "longitude": "number" },
+        "rating": "number",
+        "description": "string"
+      }
+    ],
+    "itinerary": [
+      {
+        "day": "number",
+        "day_plan": "string",
+        "best_time_to_visit_day": "string",
+        "activities": [
+          {
+            "place_name": "string",
+            "place_details": "string",
+            "place_image_url": "string",
+            "geo_coordinates": { "latitude": "number", "longitude": "number" },
+            "place_address": "string",
+            "ticket_pricing": "string",
+            "time_travel_each_location": "string",
+            "best_time_to_visit": "string"
+          }
+        ]
+      }
+    ]
+  }
 }
-],
-"itinerary": [
-{
-"day": "number",
-"day_plan": "string",
-"best_time_to_visit_day": "string",
-"activities": [
-{
-"place_name": "string",
-"place_details": "string",
-"place_image_url": "string",
-"geo_coordinates": {
-"latitude": "number",
-"longitude": "number"
-},
-"place_address": "string",
-"ticket_pricing": "string",
-"time_travel_each_location": "string",
-"best_time_to_visit": "string"
-}
-]
-}
-]
-}
-}`;
+`;
 
 const PROMPT = `You are an AI Trip Planner Agent. Help users plan amazing trips through interactive conversation.
 
@@ -343,7 +338,7 @@ async function createTripPlan(messages, isFinal = false) {
           },
           ...formattedMessages
         ],
-        temperature: 0.8,
+        temperature: isFinal ? 0.3 : 0.8,
         max_tokens: calculateTokens(messages, isFinal)
       });
 
@@ -433,19 +428,6 @@ export async function POST(req) {
     // (implemented exactly as requested)
     if (decision?.reason?.remaining == 0 && hasPremiumAccess) {
       return NextResponse.json(createApiResponse('No Free Credit Remaining', 'limit'), { status: 200 });
-    }
-    
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { success: false, error: "Messages array is required" },
-        { status: 400 }
-      );
-    }
-
-    // Handle user selections with specific UI flow
-    if (userSelection) {
-      const nextResponse = handleUserSelection(userSelection);
-      return NextResponse.json(createApiResponse(nextResponse.resp, nextResponse.ui), { status: 200 });
     }
 
     const result = await createTripPlan(messages, isFinal);

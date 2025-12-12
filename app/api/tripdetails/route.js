@@ -77,45 +77,124 @@ export async function POST(request) {
       interests = interests.split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    // Normalize trip_plan and itinerary (support payload where itinerary is nested under trip_plan)
-    const trip_plan = payload.trip_plan || {};
-    trip_plan.itinerary = trip_plan.itinerary || payload.itinerary || [];
+    // --- Robustly accept only valid JSON trip plans ---
+    let trip_plan = payload.trip_plan || {};
+    let itinerary = payload.itinerary || [];
+    let parseError = null;
 
-    // Helper to build a simple timeline from itinerary days
-    const buildTimelineFromItinerary = (itinerary = []) => {
-      const timeline = [];
-      itinerary.forEach(dayItem => {
-        const dayLabel = dayItem.day || dayItem.day_label || null;
-        const activities = dayItem.activities || [];
-        activities.forEach((act, idx) => {
-          timeline.push({
-            id: new mongoose.Types.ObjectId().toString(),
-            day: dayLabel,
-            title: act.place_name || act.title || `Activity ${idx + 1}`,
-            description: act.place_details || act.description || '',
-            time_estimate: act.time_travel_each_location || act.duration || null,
-            location: act.geo_coordinates || null,
-            address: act.place_address || act.address || null
-          });
-        });
-      });
-      return timeline;
-    };
-
-    // Ensure timeline exists on trip_plan
-    if (!trip_plan.timeline || !Array.isArray(trip_plan.timeline) || trip_plan.timeline.length === 0) {
-      trip_plan.timeline = buildTimelineFromItinerary(trip_plan.itinerary);
+    // If trip_plan_raw is present and trip_plan is missing, try to parse it
+    if ((!trip_plan || Object.keys(trip_plan).length === 0) && payload.trip_plan_raw) {
+      try {
+        const raw = typeof payload.trip_plan_raw === 'string' ? payload.trip_plan_raw : JSON.stringify(payload.trip_plan_raw);
+        const parsed = JSON.parse(raw);
+        if (parsed.trip_plan) {
+          trip_plan = parsed.trip_plan;
+        } else {
+          trip_plan = parsed;
+        }
+        itinerary = trip_plan.itinerary || itinerary;
+      } catch (e) {
+        parseError = e;
+        console.error('Failed to parse trip_plan_raw:', e?.message || e);
+      }
     }
 
-    // Ensure iterations snapshot exists
-    if (!trip_plan.iterations || !Array.isArray(trip_plan.iterations) || trip_plan.iterations.length === 0) {
-      trip_plan.iterations = [
-        {
-          id: new mongoose.Types.ObjectId().toString(),
-          createdAt: new Date(),
-          data: JSON.parse(JSON.stringify(trip_plan))
+    // Accept itinerary as-is
+    if (!Array.isArray(itinerary) && trip_plan && Array.isArray(trip_plan.itinerary)) {
+      itinerary = trip_plan.itinerary;
+    }
+
+    // Validate trip_plan: must be an object with non-empty itinerary array
+    let requestedDays = 0;
+    // Try to extract requested days from trip_plan.duration (e.g., "10 days")
+    if (trip_plan && typeof trip_plan.duration === 'string') {
+      const match = trip_plan.duration.match(/(\d+)/);
+      if (match) requestedDays = parseInt(match[1]);
+    }
+
+    const itineraryDays = Array.isArray(trip_plan.itinerary) ? trip_plan.itinerary.length : 0;
+
+    // Helper to call the AI for missing days (calls /api/aimodel internally)
+    async function fetchMissingDays(startDay, endDay, tripPlanBase) {
+      // Compose a prompt for the missing days
+      const prompt = `Generate ONLY days ${startDay} to ${endDay} for the following trip, in the same JSON format as before. Do NOT repeat previous days.\nBase trip info: ${JSON.stringify(tripPlanBase)}`;
+      // Use OpenRouter/OpenAI directly (simulate the same as /api/aimodel)
+      try {
+        const { openai } = await import("@/configs/openai");
+        const completion = await openai.chat.completions.create({
+          model: "openrouter/auto",
+          messages: [
+            { role: "system", content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 4000
+        });
+        const responseText = completion.choices[0].message.content;
+        const parsed = JSON.parse(responseText);
+        if (parsed.trip_plan && Array.isArray(parsed.trip_plan.itinerary)) {
+          return parsed.trip_plan.itinerary;
+        } else if (Array.isArray(parsed.itinerary)) {
+          return parsed.itinerary;
         }
-      ];
+      } catch (e) {
+        console.error('Failed to fetch missing days:', e?.message || e);
+      }
+      return [];
+    }
+
+    // If incomplete, try to auto-complete missing days
+    if (
+      !parseError &&
+      trip_plan && Array.isArray(trip_plan.itinerary) &&
+      requestedDays > 0 && itineraryDays > 0 && itineraryDays < requestedDays
+    ) {
+      const lastDay = itineraryDays;
+      const missingStart = lastDay + 1;
+      const missingEnd = requestedDays;
+      const basePlan = { ...trip_plan };
+      // Remove existing itinerary to avoid repetition
+      delete basePlan.itinerary;
+      const missingItinerary = await fetchMissingDays(missingStart, missingEnd, basePlan);
+      if (Array.isArray(missingItinerary) && missingItinerary.length > 0) {
+        trip_plan.itinerary = [...trip_plan.itinerary, ...missingItinerary];
+        itinerary = trip_plan.itinerary;
+      }
+    }
+
+    // Final validation: must have all requested days
+    const finalItineraryDays = Array.isArray(trip_plan.itinerary) ? trip_plan.itinerary.length : 0;
+    if (parseError || !trip_plan || typeof trip_plan !== 'object') {
+      return NextResponse.json({
+        error: 'Trip plan is invalid or could not be parsed.',
+        details: parseError ? parseError.message : null,
+        requestedDays,
+        itineraryDays: finalItineraryDays
+      }, { status: 400 });
+    }
+
+    // If itinerary is missing or empty, initialize as empty array
+    if (!Array.isArray(trip_plan.itinerary)) {
+      trip_plan.itinerary = [];
+    }
+
+    // If there are missing days, auto-fill with leisure/shopping/empty day messages
+    if (requestedDays > 0 && trip_plan.itinerary.length < requestedDays) {
+      const filled = [...trip_plan.itinerary];
+      for (let d = filled.length + 1; d <= requestedDays; d++) {
+        // Rotate through leisure, shopping, and not enough places
+        let day_plan = '';
+        if (d % 3 === 1) day_plan = 'Leisure day';
+        else if (d % 3 === 2) day_plan = 'Shopping and relaxation';
+        else day_plan = 'Not enough places to visit for your requirements';
+        filled.push({
+          day: d,
+          day_plan,
+          best_time_to_visit_day: '',
+          activities: []
+        });
+      }
+      trip_plan.itinerary = filled;
+      itinerary = filled;
     }
 
     // Create trip object
@@ -144,9 +223,14 @@ export async function POST(request) {
     return NextResponse.json({ message: 'Trip created', trip }, { status: 201 });
   } catch (error) {
     console.error('Error creating trip detail:', error);
-    console.error(error && error.stack);
+    if (error && error.stack) {
+      console.error(error.stack);
+    }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      error: error?.message || 'Internal server error',
+      stack: error?.stack || null
+    }, { status: 500 });
   }
 }
 

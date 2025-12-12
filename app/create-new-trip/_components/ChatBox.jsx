@@ -167,8 +167,9 @@ const ChatBox = () => {
 
       const { success, resp: aiResp, ui } = resp.data;
 
+
+      // Try to parse, but always send raw to backend
       let parsed = null;
-      // AI may return a JSON string or messy text; try parsing robustly
       try {
         parsed = JSON.parse(aiResp);
       } catch (e) {
@@ -186,39 +187,31 @@ const ChatBox = () => {
         if (parsed.trip_plan) tripPlan = parsed.trip_plan;
         else tripPlan = parsed;
       } else {
-        // if aiResp itself is an object-like string maybe server returned with message wrapper
         try {
           const msgObj = typeof aiResp === 'string' ? JSON.parse(aiResp) : aiResp;
           if (msgObj && msgObj.trip_plan) tripPlan = msgObj.trip_plan;
         } catch (_) { /* ignore */ }
       }
 
-      // If still no tripPlan, attempt to use resp.message or fallback
-      if (!tripPlan) {
-        // keep the AI response as assistant message and stop
-        setMessages(prev => [...prev, { role: 'assistant', content: aiResp || 'Trip generated', ui: ui || 'final' }]);
-        setFinalizing(false);
-        setIsLoading(false);
-        return;
-      }
-
-      // Normalize arrays
-      if (!Array.isArray(tripPlan.itinerary)) tripPlan.itinerary = tripPlan.itinerary ? [tripPlan.itinerary] : [];
-      if (!Array.isArray(tripPlan.iterations)) tripPlan.iterations = tripPlan.iterations ? tripPlan.iterations : [];
-      if (!Array.isArray(tripPlan.timeline)) tripPlan.timeline = tripPlan.timeline ? tripPlan.timeline : [];
-      if (!Array.isArray(tripPlan.interests)) tripPlan.interests = tripPlan.interests ? tripPlan.interests : [];
-
-      // Build save payload
+      // Always send raw AI output to backend, even if parsing failed
       const payload = {
         clerkId: user?.id || null,
-        title: tripPlan.destination || 'Trip',
-        destination: tripPlan.destination || '',
-        budget: tripPlan.budget || '',
-        groupSize: tripPlan.groupSize || '',
-        interests: tripPlan.interests || [],
-        trip_plan: tripPlan,
-        itinerary: tripPlan.itinerary || []
+        trip_plan_raw: aiResp,
       };
+      if (tripPlan) {
+        // Normalize arrays
+        if (!Array.isArray(tripPlan.itinerary)) tripPlan.itinerary = tripPlan.itinerary ? [tripPlan.itinerary] : [];
+        if (!Array.isArray(tripPlan.iterations)) tripPlan.iterations = tripPlan.iterations ? tripPlan.iterations : [];
+        if (!Array.isArray(tripPlan.timeline)) tripPlan.timeline = tripPlan.timeline ? tripPlan.timeline : [];
+        if (!Array.isArray(tripPlan.interests)) tripPlan.interests = tripPlan.interests ? tripPlan.interests : [];
+        payload.title = tripPlan.destination || 'Trip';
+        payload.destination = tripPlan.destination || '';
+        payload.budget = tripPlan.budget || '';
+        payload.groupSize = tripPlan.groupSize || '';
+        payload.interests = tripPlan.interests || [];
+        payload.trip_plan = tripPlan;
+        payload.itinerary = tripPlan.itinerary || [];
+      }
 
       // Save to backend
       try {
@@ -226,18 +219,27 @@ const ChatBox = () => {
         const saved = saveResp?.data?.trip || saveResp?.data || null;
         if (saved && typeof setTripDetailInfo === 'function') {
           setTripDetailInfo(saved);
+          setMessages(prev => [...prev, { role: 'assistant', content: 'Your trip plan is ready!', ui: 'final' }]);
+        } else if (saveResp?.data?.error) {
+          // Backend returned an error (e.g., incomplete trip)
+          setMessages(prev => [...prev, { role: 'assistant', content: `Trip could not be completed: ${saveResp.data.error}${saveResp.data.requestedDays ? ` (Requested: ${saveResp.data.requestedDays}, Got: ${saveResp.data.itineraryDays})` : ''}` }]);
         }
       } catch (saveErr) {
         // Log full details to help debugging: status, data, message
-        const status = saveErr?.response?.status;
-        const data = saveErr?.response?.data;
+        let status = null;
+        let data = null;
+        if (saveErr?.response) {
+          status = saveErr.response.status;
+          data = saveErr.response.data;
+        }
         console.error('Error saving trip:', { status, data, message: saveErr?.message });
-        // Surface a user-facing assistant message so user sees failure
-        setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to save trip. Please try again.' }]);
+        // Show backend error if available
+        if (data && data.error) {
+          setMessages(prev => [...prev, { role: 'assistant', content: `Trip could not be completed: ${data.error}${data.requestedDays ? ` (Requested: ${data.requestedDays}, Got: ${data.itineraryDays})` : ''}` }]);
+        } else {
+          setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to save trip. Please try again.' }]);
+        }
       }
-
-      // Append assistant final summary message
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Your trip plan is ready!', ui: 'final' }]);
 
     } catch (err) {
       console.error('generateFinal error:', err);
