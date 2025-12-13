@@ -1,14 +1,29 @@
 "use client"
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import ChatBox from './_components/ChatBox';
 import Itinerary from './_components/Itinerary';
 
+import { useTripDetail } from '@/app/provider';
+
 const CreateNewTrip = () => {
   const [isMounted, setIsMounted] = useState(false);
+  const itineraryRef = useRef(null);
+  const { tripDetailInfo } = useTripDetail();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Scroll to itinerary when trip is created (mobile/medium only)
+  useEffect(() => {
+    if (tripDetailInfo && itineraryRef.current) {
+      if (window.innerWidth < 1024) {
+        setTimeout(() => {
+          itineraryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+      }
+    }
+  }, [tripDetailInfo]);
 
   const animationClass = isMounted
     ? 'opacity-100 translate-y-0'
@@ -21,7 +36,7 @@ const CreateNewTrip = () => {
           <ChatBox />
       </div>
 
-      <div className='flex-1 relative w-full h-[85vh] overflow-auto'>
+      <div ref={itineraryRef} className='flex-1 relative w-full h-[85vh] overflow-auto'>
        <Itinerary/>
       </div>
 

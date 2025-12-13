@@ -123,7 +123,7 @@ const Navbar = () => {
                                         <span>Premium</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center gap-1 px-3 py-1.5 min-w-[56px] rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700 mr-2">
+                                    <div className="flex items-center justify-center gap-1 px-3 py-1.5 min-w-14 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700 mr-2">
                                         <Ticket className="w-4 h-4 text-blue-600" />
                                         <span className="text-sm font-semibold">{creditsInfo.remaining}/5</span>
                                     </div>
@@ -133,9 +133,15 @@ const Navbar = () => {
                         </div>
                     )}
 
-                    {/* Mobile compact actions (visible on small screens) */}
+                    {/* Mobile/Medium: Show login button before login, hamburger after login */}
                     <div className="flex md:hidden items-center gap-2">
-                        {user && (
+                        {!user ? (
+                            <SignInButton>
+                                <Button className="bg-[#F472B6] text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-pink-500 transition-all duration-300">
+                                    Login
+                                </Button>
+                            </SignInButton>
+                        ) : (
                             <>
                                 <Link href="/create-new-trip" aria-label="Generate plan" className="p-2 rounded-md hover:bg-gray-100">
                                     <Sparkles size={18} className="text-pink-500" />
@@ -153,16 +159,16 @@ const Navbar = () => {
                                         </div>
                                     )
                                 )}
+                                {/* Hamburger menu toggle only after login */}
+                                <button
+                                    className='p-2 text-gray-500 hover:text-pink-500 transition-colors duration-300'
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    aria-label="Toggle menu"
+                                >
+                                    {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                                </button>
                             </>
                         )}
-                        {/* Mobile menu toggle */}
-                        <button
-                            className='p-2 text-gray-500 hover:text-pink-500 transition-colors duration-300'
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                        </button>
                     </div>
                 </div>
 

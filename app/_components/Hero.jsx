@@ -96,7 +96,7 @@ const Hero = () => {
                             className="bg-[#F472B6] hover:bg-pink-500 absolute bottom-6 right-6 h-10 w-10 transition-transform duration-300 hover:scale-105 cursor-pointer"
                             onClick={() =>onSend()} 
                         >
-                            <Send className='h-5 w-5' />
+                           <Send className='h-5 w-5' />
                         </Button>
                     </div>
                 </div>
