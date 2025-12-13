@@ -20,6 +20,7 @@
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
     "dotted-map": "^2.2.3",
+    "groq-sdk": "^0.37.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.554.0",
     "mongoose": "^9.0.0",

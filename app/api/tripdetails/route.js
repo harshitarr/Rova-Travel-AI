@@ -3,35 +3,33 @@ import { currentUser } from '@clerk/nextjs/server';
 import connectToDatabase from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import mongoose from 'mongoose';
+// Ensure this file exports 'groq' as per previous instructions
+import { groq } from "@/configs/openai"; 
 
 export async function POST(request) {
   try {
     const payload = await request.json();
 
-    // Accept clerkId OR email. If clerkId is missing, attempt to resolve via Clerk session or email lookup.
     if (!payload) {
       return NextResponse.json({ error: 'Missing request payload' }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    // Resolve clerkId from payload, clerk session, or email
+    // 1. Resolve User (Clerk ID / Email)
     let clerkId = payload.clerkId;
     if (!clerkId) {
       try {
         const sessionUser = await currentUser();
         clerkId = sessionUser?.id;
         if (sessionUser?.primaryEmailAddress?.emailAddress && !payload.email) {
-          // populate payload.email for possible lookup/logging
           payload.email = sessionUser.primaryEmailAddress.emailAddress;
         }
       } catch (e) {
-        // ignore - currentUser may fail in some environments
         console.warn('Could not resolve clerk session user:', e?.message || e);
       }
     }
 
-    // If still no clerkId but email provided, try to find user by email and use their clerkId
     let user = null;
     if (clerkId) {
       user = await User.findOne({ clerkId });
@@ -42,9 +40,8 @@ export async function POST(request) {
       if (user && !clerkId) clerkId = user.clerkId;
     }
 
+    // 2. Create Placeholder User if missing
     if (!user) {
-      // If no user found, create a minimal placeholder user so trips can be saved.
-      // Generate a unique clerkId/email if none provided.
       const generatedClerkId = clerkId || `anon_${new mongoose.Types.ObjectId().toString()}`;
       const generatedEmail = payload.email || `${generatedClerkId}@example.com`;
       const generatedName = payload.name || 'Guest User';
@@ -68,30 +65,24 @@ export async function POST(request) {
       }
     }
 
-    // Generate tripId if not provided
+    // 3. Prepare Trip Data
     const tripId = payload.tripId || new mongoose.Types.ObjectId().toString();
 
-    // Normalize interests to array
     let interests = payload.interests || [];
     if (typeof interests === 'string') {
       interests = interests.split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    // --- Robustly accept only valid JSON trip plans ---
+    // --- Robust Trip Plan Parsing ---
     let trip_plan = payload.trip_plan || {};
     let itinerary = payload.itinerary || [];
     let parseError = null;
 
-    // If trip_plan_raw is present and trip_plan is missing, try to parse it
     if ((!trip_plan || Object.keys(trip_plan).length === 0) && payload.trip_plan_raw) {
       try {
         const raw = typeof payload.trip_plan_raw === 'string' ? payload.trip_plan_raw : JSON.stringify(payload.trip_plan_raw);
         const parsed = JSON.parse(raw);
-        if (parsed.trip_plan) {
-          trip_plan = parsed.trip_plan;
-        } else {
-          trip_plan = parsed;
-        }
+        trip_plan = parsed.trip_plan || parsed;
         itinerary = trip_plan.itinerary || itinerary;
       } catch (e) {
         parseError = e;
@@ -99,14 +90,12 @@ export async function POST(request) {
       }
     }
 
-    // Accept itinerary as-is
     if (!Array.isArray(itinerary) && trip_plan && Array.isArray(trip_plan.itinerary)) {
       itinerary = trip_plan.itinerary;
     }
 
-    // Validate trip_plan: must be an object with non-empty itinerary array
+    // 4. Calculate Days logic
     let requestedDays = 0;
-    // Try to extract requested days from trip_plan.duration (e.g., "10 days")
     if (trip_plan && typeof trip_plan.duration === 'string') {
       const match = trip_plan.duration.match(/(\d+)/);
       if (match) requestedDays = parseInt(match[1]);
@@ -114,54 +103,85 @@ export async function POST(request) {
 
     const itineraryDays = Array.isArray(trip_plan.itinerary) ? trip_plan.itinerary.length : 0;
 
-    // Helper to call the AI for missing days (calls /api/aimodel internally)
+    // --- HELPER: Fetch Missing Days using Groq ---
     async function fetchMissingDays(startDay, endDay, tripPlanBase) {
-      // Compose a prompt for the missing days
-      const prompt = `Generate ONLY days ${startDay} to ${endDay} for the following trip, in the same JSON format as before. Do NOT repeat previous days.\nBase trip info: ${JSON.stringify(tripPlanBase)}`;
-      // Use OpenRouter/OpenAI directly (simulate the same as /api/aimodel)
+      const prompt = `
+        You are a travel itinerary extender. 
+        Generate valid JSON for ONLY days ${startDay} to ${endDay} to complete the trip.
+        Do NOT repeat day 1 to ${startDay - 1}.
+        
+        Base trip details: ${JSON.stringify(tripPlanBase).substring(0, 1000)}... (truncated context).
+        
+        Output Schema:
+        {
+          "itinerary": [
+            {
+              "day": number,
+              "day_plan": "string",
+              "best_time_to_visit_day": "string",
+              "activities": [ ...same schema as standard activities... ]
+            }
+          ]
+        }
+      `;
+
       try {
-        const { openai } = await import("@/configs/openai");
-        const completion = await openai.chat.completions.create({
-          model: "openrouter/auto",
+        // Use Groq client imported from configs
+        const completion = await groq.chat.completions.create({
+          model: "llama3-70b-8192", // Fast, large context
           messages: [
-            { role: "system", content: prompt }
+            { role: "system", content: "You are a JSON generator. Output strictly valid JSON." },
+            { role: "user", content: prompt }
           ],
           temperature: 0.3,
-          max_tokens: 4000
+          max_tokens: 4000,
+          response_format: { type: "json_object" } // Force JSON
         });
-        const responseText = completion.choices[0].message.content;
+
+        const responseText = completion.choices[0]?.message?.content || "{}";
         const parsed = JSON.parse(responseText);
-        if (parsed.trip_plan && Array.isArray(parsed.trip_plan.itinerary)) {
-          return parsed.trip_plan.itinerary;
-        } else if (Array.isArray(parsed.itinerary)) {
+        
+        // Handle variations in AI output structure
+        if (parsed.itinerary && Array.isArray(parsed.itinerary)) {
           return parsed.itinerary;
+        } else if (parsed.trip_plan && Array.isArray(parsed.trip_plan.itinerary)) {
+          return parsed.trip_plan.itinerary;
         }
       } catch (e) {
-        console.error('Failed to fetch missing days:', e?.message || e);
+        console.error('Failed to fetch missing days via Groq:', e?.message || e);
       }
       return [];
     }
 
-    // If incomplete, try to auto-complete missing days
+    // 5. Auto-complete missing days if necessary
     if (
       !parseError &&
       trip_plan && Array.isArray(trip_plan.itinerary) &&
       requestedDays > 0 && itineraryDays > 0 && itineraryDays < requestedDays
     ) {
+      console.log(`Itinerary incomplete (Got ${itineraryDays}, wanted ${requestedDays}). Fetching missing days...`);
       const lastDay = itineraryDays;
       const missingStart = lastDay + 1;
       const missingEnd = requestedDays;
+      
       const basePlan = { ...trip_plan };
-      // Remove existing itinerary to avoid repetition
-      delete basePlan.itinerary;
+      delete basePlan.itinerary; // Don't send full existing itinerary to save tokens
+      
       const missingItinerary = await fetchMissingDays(missingStart, missingEnd, basePlan);
+      
       if (Array.isArray(missingItinerary) && missingItinerary.length > 0) {
-        trip_plan.itinerary = [...trip_plan.itinerary, ...missingItinerary];
+        // Correct the day numbers if AI messed them up
+        const correctedMissing = missingItinerary.map((day, idx) => ({
+            ...day,
+            day: missingStart + idx
+        }));
+        
+        trip_plan.itinerary = [...trip_plan.itinerary, ...correctedMissing];
         itinerary = trip_plan.itinerary;
       }
     }
 
-    // Final validation: must have all requested days
+    // 6. Validation
     const finalItineraryDays = Array.isArray(trip_plan.itinerary) ? trip_plan.itinerary.length : 0;
     if (parseError || !trip_plan || typeof trip_plan !== 'object') {
       return NextResponse.json({
@@ -172,24 +192,23 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // If itinerary is missing or empty, initialize as empty array
+    // 7. Final Fallback (Fill with strings if AI failed)
     if (!Array.isArray(trip_plan.itinerary)) {
       trip_plan.itinerary = [];
     }
 
-    // If there are missing days, auto-fill with leisure/shopping/empty day messages
     if (requestedDays > 0 && trip_plan.itinerary.length < requestedDays) {
       const filled = [...trip_plan.itinerary];
       for (let d = filled.length + 1; d <= requestedDays; d++) {
-        // Rotate through leisure, shopping, and not enough places
         let day_plan = '';
-        if (d % 3 === 1) day_plan = 'Leisure day';
-        else if (d % 3 === 2) day_plan = 'Shopping and relaxation';
-        else day_plan = 'Not enough places to visit for your requirements';
+        if (d % 3 === 1) day_plan = 'Relaxation and local exploration';
+        else if (d % 3 === 2) day_plan = 'Shopping and souvenirs';
+        else day_plan = 'Departure preparation or leisure time';
+        
         filled.push({
           day: d,
           day_plan,
-          best_time_to_visit_day: '',
+          best_time_to_visit_day: 'Anytime',
           activities: []
         });
       }
@@ -197,7 +216,7 @@ export async function POST(request) {
       itinerary = filled;
     }
 
-    // Create trip object
+    // 8. Save to MongoDB
     const trip = {
       tripId,
       title: payload.title || '',
@@ -214,19 +233,15 @@ export async function POST(request) {
       updatedAt: new Date()
     };
 
-    // Add trip to user's trips array
     user.trips.push(trip);
-    await user.save(); // This will trigger the pre-save middleware to update numberOfTrips
+    await user.save();
 
     console.log(`Trip ${tripId} added to user ${clerkId}. Total trips: ${user.numberOfTrips}`);
 
     return NextResponse.json({ message: 'Trip created', trip }, { status: 201 });
+
   } catch (error) {
     console.error('Error creating trip detail:', error);
-    if (error && error.stack) {
-      console.error(error.stack);
-    }
-
     return NextResponse.json({
       error: error?.message || 'Internal server error',
       stack: error?.stack || null
@@ -246,7 +261,6 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Find user and get their trips
     const user = await User.findOne({ clerkId }).lean();
     if (!user) {
       return NextResponse.json({ trips: [] }, { status: 200 });
@@ -254,12 +268,10 @@ export async function GET(request) {
 
     let trips = user.trips || [];
 
-    // Filter by tripId if provided
     if (tripId) {
       trips = trips.filter(trip => trip.tripId === tripId);
     }
 
-    // Sort by createdAt descending (newest first)
     trips.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     console.log(`Retrieved ${trips.length} trips for user ${clerkId}`);
@@ -282,19 +294,17 @@ export async function DELETE(request) {
 
     await connectToDatabase();
 
-    // Find user and remove the trip from their trips array
     const user = await User.findOne({ clerkId });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Find the trip to check creation date
     const tripToDelete = user.trips.find(trip => trip.tripId === tripId);
     if (!tripToDelete) {
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
     }
 
-    // Check if trip was created today
+    // Check if trip was created today (Credit Malpractice Protection)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tripCreatedDate = new Date(tripToDelete.createdAt);
@@ -306,7 +316,6 @@ export async function DELETE(request) {
       }, { status: 403 });
     }
 
-    // Filter out the trip to delete
     const initialLength = user.trips.length;
     user.trips = user.trips.filter(trip => trip.tripId !== tripId);
 
@@ -314,7 +323,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 });
     }
 
-    await user.save(); // This will trigger the pre-save middleware to update numberOfTrips
+    await user.save();
 
     console.log(`Trip ${tripId} deleted from user ${clerkId}. Remaining trips: ${user.numberOfTrips}`);
 
