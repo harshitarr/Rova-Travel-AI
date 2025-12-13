@@ -1,37 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+# Rova Travel AI
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> **AI-powered travel planning made effortless, beautiful, and personal.**
+
+---
+
+## 📖 Overview
+Rova Travel AI is a next-generation travel planner that leverages artificial intelligence to generate personalized, day-by-day itineraries for any destination. Whether you're planning a solo adventure, a family vacation, or a group trip, Rova helps you discover, organize, and manage your travels with ease. The platform is designed for both desktop and mobile, offering a seamless, modern, and visually engaging experience.
+
+---
+
+## 🖼️ Screenshots
+<!--
+Add screenshots or GIFs here to showcase the UI and features.
+Example:
+![Home Page](screenshots/home.png)
+![AI Itinerary Generation](screenshots/itinerary.gif)
+-->
+
+---
+
+## ✨ Features & Unique Highlights
+
+- **AI Itinerary Generation:** Instantly create custom travel plans based on your preferences, group size, budget, and interests. Powered by advanced AI models (OpenAI/Groq).
+- **Partial Trip Saving:** Never lose your progress! If not enough places are found, missing days are auto-filled with leisure, shopping, or rest day suggestions, and the user is clearly informed.
+- **Animated Typing Indicator:** See a dynamic, animated indicator when the AI is working on your itinerary, for a more human-like experience.
+- **Mobile-First UX:** Optimized for mobile and medium devices, including auto-scroll to trip details after creation and responsive navigation.
+- **Dynamic Navbar:** On mobile/medium, see a prominent pink login button before login, and a hamburger menu after login for easy access.
+- **User Credits & Premium:** Track your usage with a clear credit system, and unlock premium/unlimited features for power users.
+- **Beautiful, Modern UI:** Enjoy a visually rich interface with animated sparkles, primary pink accents, and dynamic destination names.
+- **Secure Authentication:** User accounts and sessions are managed with Clerk for a seamless and secure login/signup experience.
+- **Trip Management:** View, edit, and manage all your saved trips in one place.
+- **Contact & Support:** Built-in contact form for user feedback and support.
+
+---
+
+## 🛠️ Tools & Technologies
+
+### Frontend
+- **Next.js 16** – React-based framework for server-side rendering and routing
+- **Tailwind CSS** – Utility-first CSS for rapid, responsive design
+- **Lucide Icons** – Modern, open-source icon set
+- **Clerk** – Authentication and user management
+
+### Backend
+- **Node.js** – JavaScript runtime for API routes
+- **MongoDB** – NoSQL database for storing users, trips, and itinerary data
+- **Mongoose** – Elegant MongoDB object modeling for Node.js
+- **OpenAI / Groq** – AI models for generating itineraries and recommendations
+
+### APIs
+- **Google Places API** – Fetches rich destination and place details
+- **Custom REST APIs** – For trip, user, and credits management
+
+---
+
+## ⚙️ Environment Setup
+
+1. **Clone the repository:**
+	```bash
+	git clone https://github.com/yourusername/rova-travel-ai.git
+	cd rova-travel-ai
+	```
+
+2. **Install dependencies:**
+	```bash
+	npm install
+	# or
+	yarn install
+	```
+
+3. **Configure environment variables:**
+	- Copy `.env.example` to `.env.local` and fill in your secrets:
+	  - `CLERK_API_KEY` – for Clerk authentication
+	  - `MONGODB_URI` – your MongoDB connection string
+	  - `OPENAI_API_KEY` or `GROQ_API_KEY` – for AI features
+	  - `GOOGLE_PLACES_API_KEY` – for place details
+
+4. **Run the development server:**
+	```bash
+	npm run dev
+	```
+	Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🗂️ Project Structure
+
+```
+├── app/
+│   ├── _components/         # Shared React components (Navbar, Carousel, etc.)
+│   ├── api/                 # API routes (itinerary, credits, users, etc.)
+│   ├── create-new-trip/     # Trip creation UI and logic
+│   ├── my-trips/            # User's saved trips
+│   └── ...
+├── components/              # UI primitives (Button, Timeline, etc.)
+├── configs/                 # API and service configs
+├── context/                 # React context providers
+├── lib/                     # Database and utility functions
+├── public/                  # Static assets
+├── README.md
+└── ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 🌐 Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+You can deploy Rova Travel AI to Vercel, Netlify, or any platform that supports Next.js. Make sure to set all required environment variables in your deployment dashboard.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📚 Glossary & Technical Terms
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Itinerary:** A day-by-day travel plan generated by AI, tailored to user preferences.
+- **Leisure Day:** An auto-filled day in the itinerary when not enough activities are found for the user's requirements.
+- **Credits:** Usage tokens for generating trips; premium/unlimited options available.
+- **Responsive Design:** UI adapts fluidly to mobile, tablet, and desktop screens.
+- **API Route:** Server-side endpoint for handling data, AI, and user requests.
+- **Clerk:** Authentication provider for secure user management.
+- **Groq:** High-speed AI model provider for itinerary generation.
+- **Mongoose:** ODM for MongoDB, used for schema and data modeling.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🤝 Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# Rova-Travel-AI" 
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📬 Contact
+
+For support, feedback, or business inquiries, please use the contact form in the app or email [your-email@example.com](mailto:your-email@example.com).
