@@ -2,7 +2,7 @@
 
 # Rova Travel AI 🩷
 
-**AI-powered travel planning made effortless, beautiful, and personal.**✨
+**AI-powered travel planning made effortless, beautiful, and personal.** ✨
 
 ---
 
@@ -12,14 +12,7 @@ Rova Travel AI is a next-generation travel planner that leverages artificial int
 ---
 
 ## 🖼️ Screenshots
-<!--
-Add screenshots or GIFs here to showcase the UI and features.
-Example:
-![Home Page](screenshots/home.png)
-![AI Itinerary Generation](screenshots/itinerary.gif)
--->
-
----
+![Home Page](https://github.com/harshitarr/Rova-Travel-AI/blob/main/public/rovaai.png)
 
 ## ✨ Features & Unique Highlights
 
