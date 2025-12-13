@@ -1,8 +1,8 @@
 
 
-# Rova Travel AI
+# Rova Travel AI 🩷
 
-**AI-powered travel planning made effortless, beautiful, and personal.**
+**AI-powered travel planning made effortless, beautiful, and personal.**✨
 
 ---
 
@@ -51,7 +51,6 @@ Example:
 - **OpenAI / Groq** – AI models for generating itineraries and recommendations
 
 ### APIs
-- **Google Places API** – Fetches rich destination and place details
 - **Custom REST APIs** – For trip, user, and credits management
 
 ---
@@ -73,10 +72,18 @@ Example:
 
 3. **Configure environment variables:**
 	```bash
-	  - CLERK_API_KEY – for Clerk authentication
-	  - MONGODB_URI – your MongoDB connection string
-	  - OPENAI_API_KEY or GROQ_API_KEY – for AI features
-	  - GOOGLE_PLACES_API_KEY – for place details
+      -NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=....
+      -CLERK_SECRET_KEY=...
+      -NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      -NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+      -NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+      -NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      -NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+      -NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+      -MONGODB_URI=...
+      -GROQ_API_KEY=""
+      -GROK_MODEL=""
+	  
     ```
 
 4. **Run the development server:**
