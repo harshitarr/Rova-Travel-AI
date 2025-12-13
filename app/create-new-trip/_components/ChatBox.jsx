@@ -33,6 +33,7 @@ const ChatBox = () => {
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
 
   const currentStep = STEPS[stepIndex];
   const chatRef = useRef(null);
@@ -67,7 +68,7 @@ const ChatBox = () => {
     // message, verify the user's remaining credits so we can show a limit
     // message immediately when credits are exhausted.
     if (messages.length === 0) {
-          (async () => {
+      (async () => {
         try {
           const creditResp = await axios.get('/api/credits', { withCredentials: true });
           const unlimited = creditResp?.data?.unlimited === true;
@@ -89,23 +90,30 @@ const ChatBox = () => {
           console.warn('Credits check failed:', err?.message || err);
         }
 
-        const curStep = STEPS[stepIndex];
-        if (curStep && curStep.type !== 'final') {
-          setMessages(prev => [...prev, { role: 'assistant', content: curStep.label, ui: curStep.key }]);
-        }
+        // Show typing indicator before assistant question
+        setShowTyping(true);
+        setTimeout(() => {
+          setShowTyping(false);
+          const curStep = STEPS[stepIndex];
+          if (curStep && curStep.type !== 'final') {
+            setMessages(prev => [...prev, { role: 'assistant', content: curStep.label, ui: curStep.key }]);
+          }
+        }, 900);
       })();
-
       return;
     }
 
     const nextIndex = Math.min(stepIndex + 1, STEPS.length - 1);
     setStepIndex(nextIndex);
 
-    // Push the assistant prompt for the next step into the chat so the user
-    // clearly sees the next question. This restores the questioning flow.
+    // Show typing indicator before assistant question for subsequent steps
     const nextStep = STEPS[nextIndex];
     if (nextStep && nextStep.type !== "final") {
-      setMessages(prev => [...prev, { role: "assistant", content: nextStep.label, ui: nextStep.key }]);
+      setShowTyping(true);
+      setTimeout(() => {
+        setShowTyping(false);
+        setMessages(prev => [...prev, { role: "assistant", content: nextStep.label, ui: nextStep.key }]);
+      }, 900);
     }
   }, [stepIndex, messages]);
 
@@ -332,14 +340,25 @@ const ChatBox = () => {
             the bottom input (placeholder shows the question). */}
         {messages.length > 0 && (
           <div className="mt-2">
+            {/* Typing indicator before assistant question and UI */}
+            {showTyping && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base font-medium text-black">Typing</span>
+                <span className="flex items-center">
+                  <span className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce" style={{animationDelay:'0ms'}}></span>
+                  <span className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce mx-1" style={{animationDelay:'150ms'}}></span>
+                  <span className="w-2 h-2 bg-[#F472B6] rounded-full animate-bounce" style={{animationDelay:'300ms'}}></span>
+                </span>
+              </div>
+            )}
             {/* If assistant already posted this step as a chat message (ui === key),
                 don't render the duplicate top label. */}
-            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && !messages.some(m => m.role === 'assistant' && m.ui === currentStep.key) && (
+            {!showTyping && currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && !messages.some(m => m.role === 'assistant' && m.ui === currentStep.key) && (
               <div className="text-sm text-gray-600 font-medium">{currentStep.label}</div>
             )}
 
             {/* Always render component UI for non-source/destination steps */}
-            {currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
+            {!showTyping && currentStep && currentStep.key !== 'source' && currentStep.key !== 'destination' && (
               renderStepUI()
             )}
           </div>

@@ -5,6 +5,7 @@ import { Trash2, Eye, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TripDetailsModal from './_components/TripDetailsModal';
 import DeleteConfirmModal from './_components/DeleteConfirmModal';
+import { Plane } from 'lucide-react';
 
 const MyTripsPage = () => {
   const { user } = useUser();
@@ -169,41 +170,7 @@ const MyTripsPage = () => {
 
 // Trip Card Component
 const TripCard = ({ trip, index, onView, onDelete }) => {
-  const getDynamicImage = (destination) => {
-    // Map common destinations to specific beautiful images
-    const destinationImages = {
-      // India
-      'coimbatore': 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop&q=80',
-      'chennai': 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&h=600&fit=crop&q=80',
-      'mumbai': 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&h=600&fit=crop&q=80',
-      'delhi': 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&h=600&fit=crop&q=80',
-      'bangalore': 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&h=600&fit=crop&q=80',
-      'goa': 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&q=80',
-      'jaipur': 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&h=600&fit=crop&q=80',
-      'kerala': 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&h=600&fit=crop&q=80',
-      // International
-      'paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=600&fit=crop&q=80',
-      'london': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=600&fit=crop&q=80',
-      'new york': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=600&fit=crop&q=80',
-      'tokyo': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop&q=80',
-      'dubai': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&h=600&fit=crop&q=80',
-      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&h=600&fit=crop&q=80',
-      'bali': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&h=600&fit=crop&q=80',
-      'maldives': 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&h=600&fit=crop&q=80',
-    };
-
-    const destinationLower = destination?.toLowerCase() || '';
-    
-    // Check if we have a specific image for this destination
-    for (const [key, imageUrl] of Object.entries(destinationImages)) {
-      if (destinationLower.includes(key)) {
-        return imageUrl;
-      }
-    }
-    
-    // Fallback to generic travel images
-    return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&q=80';
-  };
+  // No image logic, only animated sparkles and icon+name
 
   // Check if trip was created today
   const isCreatedToday = () => {
@@ -218,19 +185,26 @@ const TripCard = ({ trip, index, onView, onDelete }) => {
 
   return (
     <div 
-      className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-2"
+      className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-2 border-2 border-[#F472B6]"
     >
-      {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-pink-200 to-purple-200">
-        <img
-          src={getDynamicImage(trip.destination)}
-          alt={trip.destination || 'Trip'}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&q=80';
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      {/* Animated Sparkles and Icon+Destination Name */}
+      <div className="relative flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-white rounded-xl shadow h-40 overflow-hidden">
+        {/* Animated sparkles */}
+        <div className="absolute inset-0">
+          <div className="absolute top-4 left-4 w-1 h-1 bg-pink-400 rounded-full animate-ping" style={{animationDuration: '2s'}}></div>
+          <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-purple-400 rounded-full animate-ping" style={{animationDuration: '3s', animationDelay: '0.5s'}}></div>
+          <div className="absolute bottom-6 left-12 w-1 h-1 bg-pink-300 rounded-full animate-ping" style={{animationDuration: '2.5s', animationDelay: '1s'}}></div>
+          <div className="absolute bottom-10 right-6 w-1 h-1 bg-purple-300 rounded-full animate-ping" style={{animationDuration: '3s', animationDelay: '1.5s'}}></div>
+          <div className="absolute top-1/2 left-6 w-1 h-1 bg-pink-400 rounded-full animate-ping" style={{animationDuration: '2s', animationDelay: '0.3s'}}></div>
+          <div className="absolute top-1/3 right-10 w-1.5 h-1.5 bg-purple-400 rounded-full animate-ping" style={{animationDuration: '2.8s', animationDelay: '0.8s'}}></div>
+        </div>
+        {/* Logo content */}
+        <div className="relative z-10 flex flex-col items-center gap-2">
+         <Plane size={48} className='text-[#F472B6] animate-pulse' style={{animationDuration: '3s'}}/>
+          <h2 className="text-2xl font-extrabold tracking-tight text-gray-800">
+            {trip.destination || trip.title || 'Trip'}
+          </h2>
+        </div>
       </div>
 
       {/* Content Section */}

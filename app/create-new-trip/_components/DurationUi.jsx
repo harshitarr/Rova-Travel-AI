@@ -6,7 +6,7 @@ const DurationUi = ({ onSelectedOption }) => {
   const clickTimeoutRef = useRef(null);
 
   const incrementDays = () => {
-    if (days < 30) setDays(days + 1);
+    if (days < 15) setDays(days + 1);
   };
 
   const decrementDays = () => {
@@ -64,7 +64,7 @@ const DurationUi = ({ onSelectedOption }) => {
         <button
           onClick={incrementDays}
           className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-200 text-gray-600 font-bold text-lg transform hover:scale-110 active:scale-95"
-          disabled={days >= 30}
+          disabled={days >= 15}
         >
           +
         </button>
