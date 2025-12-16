@@ -1,6 +1,8 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 import { Mail, MapPin, Phone, Send, CheckCircle } from 'lucide-react';
+import emailjs from 'emailjs-com';
 
 const ContactUsPage = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -28,15 +30,47 @@ const ContactUsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-      
-      setTimeout(() => setSubmitStatus(null), 5000);
-    }, 1500);
+    setSubmitStatus(null);
+    try {
+      // Get EmailJS config from NEXT_PUBLIC_ env variables
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+      const userId = process.env.NEXT_PUBLIC_EMAILJS_USER_ID;
+      const toEmail = process.env.NEXT_PUBLIC_EMAIL_TO;
+
+      if (!serviceId || !userId || !templateId) {
+        console.error('Missing EmailJS config: serviceId, userId, or templateId');
+        setSubmitStatus('error');
+        setIsSubmitting(false);
+        return;
+      }
+
+
+      // Prepare template params for EmailJS (must match your template variables)
+      const templateParams = {
+        fullname: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        time: new Date().toLocaleString(),
+      };
+
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, userId)
+        .then(() => {
+          setSubmitStatus('success');
+          setFormData({ name: '', email: '', subject: '', message: '' });
+        })
+        .catch((err) => {
+          console.error('EmailJS error:', err);
+          setSubmitStatus('error');
+        });
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setSubmitStatus('error');
+    }
+    setIsSubmitting(false);
+    setTimeout(() => setSubmitStatus(null), 5000);
   };
 
   const animationClass = isMounted
@@ -44,7 +78,7 @@ const ContactUsPage = () => {
     : 'opacity-0 translate-y-8';
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-pink-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-out ${animationClass}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-pink-50 via-white mt-[-30px] to-blue-50 py-12 px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-out ${animationClass}`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -174,6 +208,13 @@ const ContactUsPage = () => {
                     <p className="text-green-800 text-sm font-medium flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
                       Message sent successfully! We'll get back to you soon.
+                    </p>
+                  </div>
+                )}
+                {submitStatus === 'error' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800 text-sm font-medium flex items-center gap-2">
+                      Something went wrong. Please try again later.
                     </p>
                   </div>
                 )}
