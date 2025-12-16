@@ -187,7 +187,7 @@ const TripCard = ({ trip, index, onView, onDelete }) => {
     <div 
       className="bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden group transform hover:-translate-y-2 border-2 border-[#F472B6]"
     >
-      {/* Animated Sparkles and Icon+Destination Name */}
+      {/* Animated Sparkles and Icon+Destination Nam */}
       <div className="relative flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-white rounded-xl shadow h-40 overflow-hidden">
         {/* Animated sparkles */}
         <div className="absolute inset-0">
