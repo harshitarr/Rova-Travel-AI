@@ -1,6 +1,6 @@
 
 
-# Rova Travel AI 🩷
+# Rova Travel AI (AI-Driven Personalized Full-Stack Travel Planner)🩷
 
 **AI-powered travel planning made effortless, beautiful, and personal.** ✨
 
